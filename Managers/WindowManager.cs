@@ -103,8 +103,10 @@ namespace SideBarTaskSwitcher.Managers
                     {
                         var title = titleBuilder.ToString();
                         
-                        // Filter out empty descriptions, Program Manager, etc.
-                        if (!string.IsNullOrWhiteSpace(title) && title != "Program Manager")
+                        // Filter out empty descriptions, Program Manager, and known overlay/hidden windows
+                        string[] ignoredTitles = { "Program Manager", "Recording", "Microsoft Text Input Application" };
+                        
+                        if (!string.IsNullOrWhiteSpace(title) && !ignoredTitles.Contains(title))
                         {
                             windows.Add(new WindowItemViewModel
                             {
@@ -145,10 +147,42 @@ namespace SideBarTaskSwitcher.Managers
             SetForegroundWindow(handle);
         }
 
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int left;
+            public int top;
+            public int right;
+            public int bottom;
+        }
+
+        private const int DWMWA_CLOAKED = 14;
+        private const uint WS_EX_TRANSPARENT = 0x00000020;
+        private const uint WS_EX_LAYERED = 0x00080000;
+
         private bool IsTaskbarWindow(IntPtr hWnd)
         {
             if (!IsWindowVisible(hWnd))
                 return false;
+
+            int cloakedVal;
+            DwmGetWindowAttribute(hWnd, DWMWA_CLOAKED, out cloakedVal, sizeof(int));
+            if (cloakedVal != 0)
+                return false;
+
+            // 1. サイズが異常（0x0のような見えないウィンドウ）を除外
+            if (GetWindowRect(hWnd, out RECT rect))
+            {
+                if (rect.right - rect.left <= 0 || rect.bottom - rect.top <= 0)
+                    return false;
+            }
 
             IntPtr rootOwner = GetAncestor(hWnd, GA_ROOTOWNER);
             if (GetLastActivePopup(rootOwner) != hWnd)
@@ -156,6 +190,10 @@ namespace SideBarTaskSwitcher.Managers
 
             int exStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
             
+            // 2. マウスクリックを透過する設定のオーバーレイ表示（透明レイヤー）を除外
+            if ((exStyle & WS_EX_LAYERED) != 0 && (exStyle & WS_EX_TRANSPARENT) != 0)
+                return false;
+
             if ((exStyle & WS_EX_APPWINDOW) != 0)
                 return true;
 
