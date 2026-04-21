@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Threading;
 using SideBarTaskSwitcher.Managers;
 using SideBarTaskSwitcher.ViewModels;
+using System.Reflection;
+using Forms = System.Windows.Forms;
 
 namespace SideBarTaskSwitcher
 {
@@ -13,6 +15,7 @@ namespace SideBarTaskSwitcher
         private WindowManager _windowManager;
         private ObservableCollection<WindowItemViewModel> _windows;
         private DispatcherTimer _timer;
+        private Forms.NotifyIcon _notifyIcon;
 
         public MainWindow()
         {
@@ -34,11 +37,29 @@ namespace SideBarTaskSwitcher
             _timer.Interval = TimeSpan.FromSeconds(2);
             _timer.Tick += (s, ev) => RefreshWindowList();
             _timer.Start();
+
+            // Set up NotifyIcon for System Tray
+            _notifyIcon = new Forms.NotifyIcon();
+            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+            _notifyIcon.Visible = true;
+            _notifyIcon.Text = "SideBar Task Switcher";
+
+            var contextMenuStrip = new Forms.ContextMenuStrip();
+            var closeMenuItem = new Forms.ToolStripMenuItem("閉じる");
+            closeMenuItem.Click += (s, args) => this.Close();
+            contextMenuStrip.Items.Add(closeMenuItem);
+
+            _notifyIcon.ContextMenuStrip = contextMenuStrip;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             _appBarManager?.Unregister();
+            if (_notifyIcon != null)
+            {
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+            }
         }
 
         private void RefreshWindowList()
