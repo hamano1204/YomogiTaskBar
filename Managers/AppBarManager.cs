@@ -77,6 +77,29 @@ namespace SideBarTaskSwitcher.Managers
             _isRegistered = true;
         }
 
+        public void UpdateWidth(int width)
+        {
+            if (!_isRegistered) return;
+            _currentWidth = width;
+            SizeAppBar();
+        }
+
+        public void PreviewWidth(int width)
+        {
+            if (!_isRegistered) return;
+            
+            var screenWidth = (int)SystemParameters.PrimaryScreenWidth;
+            var screenHeight = (int)SystemParameters.PrimaryScreenHeight;
+
+            int left = screenWidth - width;
+            int right = screenWidth;
+            int top = 0;
+            int bottom = screenHeight;
+
+            // ウィンドウサイズ・位置のみ更新（他ウィンドウの再配置は行わない）
+            SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, 0x0014); // SWP_NOACTIVATE | SWP_NOZORDER
+        }
+
         public void Unregister()
         {
             if (!_isRegistered) return;

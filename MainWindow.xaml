@@ -16,8 +16,19 @@
         Background="#CCF5F5F5"
         Loaded="Window_Loaded"
         Closing="Window_Closing">
-    <DockPanel>
-        <!-- Header -->
+    <Grid>
+        <!-- Resize Handle -->
+        <Thumb HorizontalAlignment="Left" Width="6" Cursor="SizeWE" 
+               DragStarted="Thumb_DragStarted" DragDelta="Thumb_DragDelta" DragCompleted="Thumb_DragCompleted" Panel.ZIndex="1">
+            <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Thumb.Template>
+        </Thumb>
+        
+        <DockPanel Margin="6,0,0,0">
+            <!-- Header -->
         <Border DockPanel.Dock="Top" Background="#33000000" Padding="10">
             <Grid>
                 <TextBlock Text="Tasks" FontWeight="Bold" VerticalAlignment="Center" Foreground="#333"/>
@@ -51,5 +62,6 @@
                 </Style>
             </ListBox.ItemContainerStyle>
         </ListBox>
-    </DockPanel>
+        </DockPanel>
+    </Grid>
 </Window>

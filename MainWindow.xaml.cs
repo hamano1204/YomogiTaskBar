@@ -86,5 +86,35 @@ namespace SideBarTaskSwitcher
                 WindowsList.SelectedItem = null; // Reset selection
             }
         }
+
+        private double _tempWidth;
+
+        private void Thumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            _tempWidth = this.Width;
+        }
+
+        private void Thumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+        {
+            // AppBar is docked to the right, so dragging thumb to the left (negative e.HorizontalChange) increases width
+            _tempWidth -= e.HorizontalChange;
+            
+            // Set reasonable min/max width constraints
+            if (_tempWidth >= 100 && _tempWidth <= 800)
+            {
+                this.Width = _tempWidth;
+                // Update only Window Visual position, do NOT push other windows to prevent lagging
+                _appBarManager?.PreviewWidth((int)_tempWidth);
+            }
+        }
+
+        private void Thumb_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            if (_tempWidth >= 100 && _tempWidth <= 800)
+            {
+                 // Push other windows now that drag has finished
+                _appBarManager?.UpdateWidth((int)_tempWidth);
+            }
+        }
     }
 }
