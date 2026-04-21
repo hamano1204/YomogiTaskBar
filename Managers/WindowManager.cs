@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Linq;
 using SideBarTaskSwitcher.ViewModels;
 
 namespace SideBarTaskSwitcher.Managers
@@ -110,7 +111,8 @@ namespace SideBarTaskSwitcher.Managers
                                 Handle = hWnd,
                                 Title = title,
                                 ProcessId = (int)processId,
-                                IconSource = GetWindowIcon(hWnd)
+                                IconSource = GetWindowIcon(hWnd),
+                                IsMinimized = IsIconic(hWnd)
                             });
                         }
                     }
@@ -118,7 +120,20 @@ namespace SideBarTaskSwitcher.Managers
                 return true;
             }, IntPtr.Zero);
 
-            return windows;
+            var normalWindows = windows.Where(w => !w.IsMinimized).ToList();
+            var minimizedWindows = windows.Where(w => w.IsMinimized).ToList();
+
+            var sortedWindows = new List<WindowItemViewModel>();
+            sortedWindows.AddRange(normalWindows);
+
+            if (normalWindows.Count > 0 && minimizedWindows.Count > 0)
+            {
+                sortedWindows.Add(new WindowItemViewModel { IsSeparator = true, Title = "Separator" });
+            }
+
+            sortedWindows.AddRange(minimizedWindows);
+
+            return sortedWindows;
         }
 
         public void ActivateWindow(IntPtr handle)

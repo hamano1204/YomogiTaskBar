@@ -45,20 +45,40 @@
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="5" Background="Transparent">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="32"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
-                        <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
-                                   Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
+                        <Grid x:Name="ContentGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
+                                       Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
+                        </Grid>
+                        <!-- Separator line -->
+                        <Border x:Name="SeparatorBorder" Height="1" Background="#888888" Margin="0,5" Visibility="Collapsed"/>
                     </Grid>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                            <Setter TargetName="ContentGrid" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="SeparatorBorder" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsMinimized}" Value="True">
+                            <!-- Make minimized windows look slightly faded -->
+                            <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </ListBox.ItemTemplate>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Padding" Value="5"/>
                     <Setter Property="Cursor" Value="Hand"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                            <Setter Property="IsEnabled" Value="False"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
             </ListBox.ItemContainerStyle>
         </ListBox>

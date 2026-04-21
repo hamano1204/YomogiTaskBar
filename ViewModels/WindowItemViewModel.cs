@@ -9,5 +9,7 @@ namespace SideBarTaskSwitcher.ViewModels
         public string Title { get; set; } = string.Empty;
         public int ProcessId { get; set; }
         public ImageSource? IconSource { get; set; }
+        public bool IsMinimized { get; set; }
+        public bool IsSeparator { get; set; }
     }
 }
