@@ -75,6 +75,7 @@ namespace SideBarTaskSwitcher.Managers
         private const uint WS_EX_APPWINDOW = 0x00040000;
         
         private const int SW_RESTORE = 9;
+        private const uint WM_CLOSE = 0x0010;
 
         private const uint WM_GETICON = 0x007F;
         private const int ICON_SMALL = 0;
@@ -145,6 +146,11 @@ namespace SideBarTaskSwitcher.Managers
                 ShowWindow(handle, SW_RESTORE);
             }
             SetForegroundWindow(handle);
+        }
+
+        public void CloseWindow(IntPtr handle)
+        {
+            SendMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
         [DllImport("dwmapi.dll")]

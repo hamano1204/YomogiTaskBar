@@ -49,10 +49,15 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
                             <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
                                        Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
+                            <Button Grid.Column="2" Content="✕" Width="20" Height="20" Margin="5,0,0,0"
+                                    Background="Transparent" BorderThickness="0" Foreground="#A000"
+                                    FontWeight="Bold" Cursor="Hand" Click="CloseItemButton_Click"
+                                    ToolTip="このウィンドウを閉じる"/>
                         </Grid>
                         <!-- Separator line -->
                         <Border x:Name="SeparatorBorder" Height="1" Background="#A0A0A0" Margin="10,5" Visibility="Collapsed"/>

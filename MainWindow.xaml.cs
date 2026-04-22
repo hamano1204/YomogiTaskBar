@@ -117,6 +117,14 @@ namespace SideBarTaskSwitcher
             }
         }
 
+        private void CloseItemButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.DataContext is WindowItemViewModel windowItem)
+            {
+                _windowManager.CloseWindow(windowItem.Handle);
+            }
+        }
+
         private double _tempWidth;
 
         private void Thumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
