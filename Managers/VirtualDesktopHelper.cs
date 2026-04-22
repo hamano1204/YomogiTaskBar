@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SideBarTaskSwitcher.Managers
 {
@@ -13,54 +18,124 @@ namespace SideBarTaskSwitcher.Managers
         int MoveWindowToDesktop(IntPtr topLevelWindow, ref Guid desktopId);
     }
 
-    // Approach A: Internal COM interfaces for pinning
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("4ce81783-1e84-4576-9d88-345c19747617")]
-    internal interface IApplicationView { /* minimal definition */ }
-
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("1841c6d7-4f9d-42a0-af6d-245967278523")]
-    internal interface IApplicationViewCollection
+    public class VirtualDesktopInfo
     {
-        int GetViewForHwnd(IntPtr hwnd, out IApplicationView view);
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public bool IsCurrent { get; set; }
     }
 
-    [ComImport]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    [Guid("836d9796-0165-4a6d-968a-24020a402377")]
-    internal interface IVirtualDesktopPinnedViewManager
-    {
-        int IsViewPinned(IApplicationView view, out bool pinned);
-        int PinView(IApplicationView view);
-        int UnpinView(IApplicationView view);
-    }
-
-    public class VirtualDesktopHelper
+    public static class VirtualDesktopHelper
     {
         private static readonly IVirtualDesktopManager _manager;
-        private static readonly IApplicationViewCollection _viewCollection;
-        private static readonly IVirtualDesktopPinnedViewManager _pinnedViewManager;
 
         static VirtualDesktopHelper()
         {
             try
             {
                 _manager = (IVirtualDesktopManager)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a")));
-                
-                // Internal API objects
-                var shellType = Type.GetTypeFromCLSID(new Guid("1841c6d7-4f9d-42a0-af6d-245967278523")); // CLSID_ImmersiveShell
-                // Note: These CLSIDs and IIDs are internal and can change.
-                // We use common ones for Win10/11.
-                
-                _viewCollection = (IApplicationViewCollection)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("1841c6d7-4f9d-42a0-af6d-245967278523")));
-                _pinnedViewManager = (IVirtualDesktopPinnedViewManager)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("2C362F4A-3920-4B3A-AA31-1606AD69CD2A")));
             }
-            catch
+            catch { }
+        }
+
+        public static List<VirtualDesktopInfo> GetDesktops()
+        {
+            var results = new List<VirtualDesktopInfo>();
+            try
             {
-                // Fallback if internal APIs are not available or changed
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\VirtualDesktops");
+                if (key != null)
+                {
+                    var virtualDesktops = (byte[]?)key.GetValue("VirtualDesktopIDs") ?? (byte[]?)key.GetValue("VirtualDesktopList");
+                    var currentDesktop = (byte[]?)key.GetValue("CurrentVirtualDesktop");
+                    Guid currentGuid = (currentDesktop != null && currentDesktop.Length >= 16) ? new Guid(currentDesktop) : Guid.Empty;
+
+                    if (virtualDesktops != null)
+                    {
+                        for (int i = 0; i < virtualDesktops.Length; i += 16)
+                        {
+                            byte[] guidBytes = new byte[16];
+                            Array.Copy(virtualDesktops, i, guidBytes, 0, 16);
+                            Guid id = new Guid(guidBytes);
+                            results.Add(new VirtualDesktopInfo
+                            {
+                                Id = id,
+                                Name = GetDesktopName(id, results.Count + 1),
+                                IsCurrent = id == currentGuid
+                            });
+                        }
+                    }
+                }
             }
+            catch { }
+            if (results.Count == 0) results.Add(new VirtualDesktopInfo { Name = "Desktop 1", IsCurrent = true });
+            return results;
+        }
+
+        private static string GetDesktopName(Guid id, int index)
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey($@"Software\Microsoft\Windows\CurrentVersion\Explorer\VirtualDesktops\Desktops\{{{id}}}");
+                if (key != null)
+                {
+                    var name = key.GetValue("Name") as string;
+                    if (!string.IsNullOrEmpty(name)) return name;
+                }
+            }
+            catch { }
+            return $"Desktop {index}";
+        }
+
+        public static string GetCurrentDesktopName()
+        {
+            var desktops = GetDesktops();
+            return desktops.FirstOrDefault(d => d.IsCurrent)?.Name ?? "Desktop 1";
+        }
+
+        [DllImport("user32.dll")]
+        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+        const uint KEYEVENTF_KEYUP = 0x0002;
+        const byte VK_LWIN = 0x5B;
+        const byte VK_CONTROL = 0x11;
+        const byte VK_LEFT = 0x25;
+        const byte VK_RIGHT = 0x27;
+        const byte VK_D = 0x44;
+
+        private static void SendKeyCombo(byte directionKey)
+        {
+            keybd_event(VK_LWIN, 0, 0, 0);
+            keybd_event(VK_CONTROL, 0, 0, 0);
+            keybd_event(directionKey, 0, 0, 0);
+            
+            keybd_event(directionKey, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+        }
+
+        public static async Task SwitchToDesktop(Guid id)
+        {
+            var desktops = GetDesktops();
+            int currentIndex = desktops.FindIndex(d => d.IsCurrent);
+            int targetIndex = desktops.FindIndex(d => d.Id == id);
+
+            if (currentIndex == -1 || targetIndex == -1 || currentIndex == targetIndex) return;
+
+            int diff = targetIndex - currentIndex;
+            byte key = diff > 0 ? VK_RIGHT : VK_LEFT;
+            int count = Math.Abs(diff);
+
+            for (int i = 0; i < count; i++)
+            {
+                SendKeyCombo(key);
+                await Task.Delay(200); // Wait for OS animation/processing
+            }
+        }
+
+        public static void CreateNewDesktop()
+        {
+            SendKeyCombo(VK_D);
         }
 
         public static bool IsWindowOnCurrentDesktop(IntPtr hWnd)
@@ -74,22 +149,7 @@ namespace SideBarTaskSwitcher.Managers
             catch { return true; }
         }
 
-        public static void PinWindowToAllDesktops(IntPtr hWnd)
-        {
-            if (hWnd == IntPtr.Zero || _viewCollection == null || _pinnedViewManager == null) return;
-
-            try
-            {
-                if (_viewCollection.GetViewForHwnd(hWnd, out var view) == 0)
-                {
-                    _pinnedViewManager.PinView(view);
-                }
-            }
-            catch
-            {
-                // If Approach A (Internal API) fails, we rely on the timer-based MoveToCurrentDesktop
-            }
-        }
+        public static void PinWindowToAllDesktops(IntPtr hWnd) { }
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
@@ -97,12 +157,10 @@ namespace SideBarTaskSwitcher.Managers
         public static void MoveToCurrentDesktop(IntPtr hWnd)
         {
             if (hWnd == IntPtr.Zero || _manager == null) return;
-
             try
             {
                 if (!IsWindowOnCurrentDesktop(hWnd))
                 {
-                    // Find a window that is on the current desktop to get its Desktop ID
                     IntPtr fg = GetForegroundWindow();
                     if (fg != IntPtr.Zero && _manager.GetWindowDesktopId(fg, out Guid currentId) == 0)
                     {

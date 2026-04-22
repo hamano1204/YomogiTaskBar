@@ -101,6 +101,52 @@ namespace SideBarTaskSwitcher
             {
                 _windows.Add(w);
             }
+
+            // Update current desktop name
+            CurrentDesktopText.Text = VirtualDesktopHelper.GetCurrentDesktopName();
+        }
+
+        private void DesktopFooter_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var desktops = VirtualDesktopHelper.GetDesktops();
+            DesktopContextMenu.Items.Clear();
+
+            foreach (var desktop in desktops)
+            {
+                var item = new System.Windows.Controls.MenuItem
+                {
+                    Header = desktop.Name,
+                    IsCheckable = true,
+                    IsChecked = desktop.IsCurrent,
+                    Tag = desktop.Id
+                };
+                item.Click += async (s, args) =>
+                {
+                    if (s is System.Windows.Controls.MenuItem menuItem && menuItem.Tag is Guid id)
+                    {
+                        await VirtualDesktopHelper.SwitchToDesktop(id);
+                        await System.Threading.Tasks.Task.Delay(500); // Wait for switch to complete
+                        RefreshWindowList();
+                    }
+                };
+                DesktopContextMenu.Items.Add(item);
+            }
+
+            DesktopContextMenu.Items.Add(new System.Windows.Controls.Separator());
+
+            var addItem = new System.Windows.Controls.MenuItem { Header = "新しいデスクトップを作成 (+)" };
+            addItem.Click += (s, args) =>
+            {
+                VirtualDesktopHelper.CreateNewDesktop();
+                // Wait a bit for the desktop to be created before refreshing
+                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                timer.Tick += (st, et) => { timer.Stop(); RefreshWindowList(); };
+                timer.Start();
+            };
+            DesktopContextMenu.Items.Add(addItem);
+
+            DesktopContextMenu.PlacementTarget = sender as UIElement;
+            DesktopContextMenu.IsOpen = true;
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

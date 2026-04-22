@@ -38,6 +38,20 @@
             </Grid>
         </Border>
 
+        <!-- Virtual Desktop Footer -->
+        <Border DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="#11000000" Padding="10" 
+                Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="#22000000" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="#333" FontWeight="SemiBold"/>
+                <TextBlock Text=" ▾" Foreground="#666"/>
+            </StackPanel>
+            <Border.ContextMenu>
+                <ContextMenu x:Name="DesktopContextMenu">
+                    <!-- Items populated dynamically -->
+                </ContextMenu>
+            </Border.ContextMenu>
+        </Border>
+
         <!-- Window List -->
         <ListBox x:Name="WindowsList" Background="Transparent" BorderThickness="0" 
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
