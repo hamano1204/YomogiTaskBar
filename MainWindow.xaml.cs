@@ -138,12 +138,21 @@ namespace SideBarTaskSwitcher
             addItem.Click += (s, args) =>
             {
                 VirtualDesktopHelper.CreateNewDesktop();
-                // Wait a bit for the desktop to be created before refreshing
-                var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
                 timer.Tick += (st, et) => { timer.Stop(); RefreshWindowList(); };
                 timer.Start();
             };
             DesktopContextMenu.Items.Add(addItem);
+
+            var removeItem = new System.Windows.Controls.MenuItem { Header = "現在のデスクトップを閉じる (✕)" };
+            removeItem.Click += (s, args) =>
+            {
+                VirtualDesktopHelper.RemoveCurrentDesktop();
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                timer.Tick += (st, et) => { timer.Stop(); RefreshWindowList(); };
+                timer.Start();
+            };
+            DesktopContextMenu.Items.Add(removeItem);
 
             DesktopContextMenu.PlacementTarget = sender as UIElement;
             DesktopContextMenu.IsOpen = true;

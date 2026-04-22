@@ -102,6 +102,7 @@ namespace SideBarTaskSwitcher.Managers
         const byte VK_LEFT = 0x25;
         const byte VK_RIGHT = 0x27;
         const byte VK_D = 0x44;
+        const byte VK_F4 = 0x73;
 
         private static void SendKeyCombo(byte directionKey)
         {
@@ -136,6 +137,11 @@ namespace SideBarTaskSwitcher.Managers
         public static void CreateNewDesktop()
         {
             SendKeyCombo(VK_D);
+        }
+
+        public static void RemoveCurrentDesktop()
+        {
+            SendKeyCombo(VK_F4);
         }
 
         public static bool IsWindowOnCurrentDesktop(IntPtr hWnd)
