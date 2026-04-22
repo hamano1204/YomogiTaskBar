@@ -7,6 +7,7 @@ using SideBarTaskSwitcher.ViewModels;
 using System.Reflection;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace SideBarTaskSwitcher
 {
@@ -27,13 +28,32 @@ namespace SideBarTaskSwitcher
             WindowsList.ItemsSource = _windows;
         }
 
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const int DWMWA_EXCLUDED_FROM_PEEK = 12;
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            _windowHandle = new WindowInteropHelper(this).Handle;
+            
+            // Hide from Task View and Alt+Tab
+            int exStyle = GetWindowLong(_windowHandle, GWL_EXSTYLE);
+            SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
+            
+            int True = 1;
+            DwmSetWindowAttribute(_windowHandle, DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
+
             _appBarManager = new AppBarManager(this);
             _appBarManager.Register((int)this.Width);
 
             // Pin to all virtual desktops (Approach A)
-            _windowHandle = new WindowInteropHelper(this).Handle;
             VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
 
             RefreshWindowList();
