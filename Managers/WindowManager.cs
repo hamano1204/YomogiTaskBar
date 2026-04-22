@@ -58,6 +58,38 @@ namespace SideBarTaskSwitcher.Managers
         [DllImport("user32.dll", EntryPoint = "GetClassLong")]
         private static extern IntPtr GetClassLongPtr32(IntPtr hWnd, int nIndex);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, [Out] StringBuilder lpExeName, ref int lpdwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct SHFILEINFO
+        {
+            public IntPtr hIcon;
+            public int iIcon;
+            public uint dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+
+        private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+        private const uint SHGFI_ICON = 0x000000100;
+        private const uint SHGFI_SMALLICON = 0x000000001;
+        private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
+
         private static IntPtr GetClassLongPtr(IntPtr hWnd, int nIndex)
         {
             if (IntPtr.Size > 4)
@@ -226,6 +258,18 @@ namespace SideBarTaskSwitcher.Managers
             if (hIcon == IntPtr.Zero)
                 hIcon = GetClassLongPtr(hWnd, GCLP_HICON);
 
+            if (hIcon == IntPtr.Zero)
+            {
+                // Fallback: Get icon from process executable (useful for UWP apps like Settings)
+                string? path = GetProcessPath(hWnd);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    SHFILEINFO shinfo = new SHFILEINFO();
+                    SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_ICON | SHGFI_SMALLICON);
+                    hIcon = shinfo.hIcon;
+                }
+            }
+
             if (hIcon != IntPtr.Zero)
             {
                 try
@@ -244,6 +288,59 @@ namespace SideBarTaskSwitcher.Managers
                 }
             }
 
+            return null;
+        }
+
+        private string? GetProcessPath(IntPtr hWnd)
+        {
+            uint pid;
+            GetWindowThreadProcessId(hWnd, out pid);
+
+            // Handle ApplicationFrameHost (UWP Apps)
+            string? path = GetPathFromPid(pid);
+            if (path != null && path.EndsWith("ApplicationFrameHost.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                uint realPid = 0;
+                EnumChildWindows(hWnd, (childHWnd, lParam) =>
+                {
+                    uint childPid;
+                    GetWindowThreadProcessId(childHWnd, out childPid);
+                    if (childPid != pid)
+                    {
+                        realPid = childPid;
+                        return false; // Stop enumeration
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                if (realPid != 0)
+                {
+                    path = GetPathFromPid(realPid);
+                }
+            }
+
+            return path;
+        }
+
+        private string? GetPathFromPid(uint pid)
+        {
+            IntPtr hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (hProcess != IntPtr.Zero)
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder(1024);
+                    int size = sb.Capacity;
+                    if (QueryFullProcessImageName(hProcess, 0, sb, ref size))
+                    {
+                        return sb.ToString();
+                    }
+                }
+                finally
+                {
+                    CloseHandle(hProcess);
+                }
+            }
             return null;
         }
     }
