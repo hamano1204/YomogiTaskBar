@@ -9,11 +9,11 @@
         Height="Auto" 
         Width="280"
         WindowStyle="None" 
-        AllowsTransparency="True" 
+        AllowsTransparency="False" 
         Topmost="False"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Background="#CCF5F5F5"
+        Background="#F5F5F5"
         Loaded="Window_Loaded"
         Closing="Window_Closing">
     <Grid>
@@ -55,7 +55,7 @@
                                        Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
                         </Grid>
                         <!-- Separator line -->
-                        <Border x:Name="SeparatorBorder" Height="1" Background="#888888" Margin="0,5" Visibility="Collapsed"/>
+                        <Border x:Name="SeparatorBorder" Height="1" Background="#A0A0A0" Margin="10,5" Visibility="Collapsed"/>
                     </Grid>
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsSeparator}" Value="True">
@@ -73,6 +73,7 @@
                 <Style TargetType="ListBoxItem">
                     <Setter Property="Padding" Value="5"/>
                     <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSeparator}" Value="True">
                             <Setter Property="IsEnabled" Value="False"/>

@@ -177,6 +177,10 @@ namespace SideBarTaskSwitcher.Managers
             if (cloakedVal != 0)
                 return false;
 
+            // Check if window is on current virtual desktop
+            if (!VirtualDesktopHelper.IsWindowOnCurrentDesktop(hWnd))
+                return false;
+
             // 1. サイズが異常（0x0のような見えないウィンドウ）を除外
             if (GetWindowRect(hWnd, out RECT rect))
             {

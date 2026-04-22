@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using SideBarTaskSwitcher.Managers;
 using SideBarTaskSwitcher.ViewModels;
 using System.Reflection;
+using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 
 namespace SideBarTaskSwitcher
@@ -16,6 +17,7 @@ namespace SideBarTaskSwitcher
         private ObservableCollection<WindowItemViewModel> _windows;
         private DispatcherTimer _timer;
         private Forms.NotifyIcon _notifyIcon;
+        private IntPtr _windowHandle;
 
         public MainWindow()
         {
@@ -30,12 +32,20 @@ namespace SideBarTaskSwitcher
             _appBarManager = new AppBarManager(this);
             _appBarManager.Register((int)this.Width);
 
+            // Pin to all virtual desktops (Approach A)
+            _windowHandle = new WindowInteropHelper(this).Handle;
+            VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
+
             RefreshWindowList();
 
-            // Set up 2-second timer
+            // Set up 1-second timer
             _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromSeconds(2);
-            _timer.Tick += (s, ev) => RefreshWindowList();
+            _timer.Interval = TimeSpan.FromSeconds(1);
+            _timer.Tick += (s, ev) => 
+            {
+                VirtualDesktopHelper.MoveToCurrentDesktop(_windowHandle);
+                RefreshWindowList();
+            };
             _timer.Start();
 
             // Set up NotifyIcon for System Tray
