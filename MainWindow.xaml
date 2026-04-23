@@ -103,6 +103,18 @@
                         <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
                             <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding MonitorIndex}" Value="1">
+                            <Setter TargetName="MonitorBadge" Property="Background" Value="#0078D7"/> <!-- Windows Blue -->
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding MonitorIndex}" Value="2">
+                            <Setter TargetName="MonitorBadge" Property="Background" Value="#107C10"/> <!-- Windows Green -->
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding MonitorIndex}" Value="3">
+                            <Setter TargetName="MonitorBadge" Property="Background" Value="#D83B01"/> <!-- Windows Orange/Red -->
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding MonitorIndex}" Value="4">
+                            <Setter TargetName="MonitorBadge" Property="Background" Value="#5C2D91"/> <!-- Windows Purple -->
+                        </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>
             </ListBox.ItemTemplate>
