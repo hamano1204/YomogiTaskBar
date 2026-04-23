@@ -8,6 +8,8 @@ using System.Reflection;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Linq;
+using System.Windows.Controls;
 
 namespace SideBarTaskSwitcher
 {
@@ -180,6 +182,72 @@ namespace SideBarTaskSwitcher
             }
         }
 
+        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                this.DragMove();
+                DetectEdgeAndDock();
+            }
+        }
+
+        private void DetectEdgeAndDock()
+        {
+            var mousePos = Forms.Control.MousePosition;
+            var screenWidth = Forms.Screen.PrimaryScreen.Bounds.Width;
+
+            // Use 10% threshold for docking
+            double threshold = screenWidth * 0.1;
+
+            if (mousePos.X < threshold)
+            {
+                DockTo(AppBarManager.ABEdge.ABE_LEFT);
+            }
+            else if (mousePos.X > screenWidth - threshold)
+            {
+                DockTo(AppBarManager.ABEdge.ABE_RIGHT);
+            }
+            else
+            {
+                // Snap back to the current edge if dropped in the middle
+                DockTo(_appBarManager.Edge, force: true);
+            }
+        }
+
+        private void DockTo(AppBarManager.ABEdge edge, bool force = false)
+        {
+            if (!force && _appBarManager.Edge == edge) return;
+
+            _appBarManager.Edge = edge;
+            
+            // In case Edge property didn't trigger a re-position (because it was the same)
+            if (force)
+            {
+                _appBarManager.UpdateWidth((int)this.Width);
+            }
+
+            // Adjust UI for the new edge
+            if (edge == AppBarManager.ABEdge.ABE_LEFT)
+            {
+                ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
+                // Margin adjust: content should not be under the thumb
+                var dockPanel = (ResizeThumb.Parent as Grid).Children.OfType<DockPanel>().FirstOrDefault();
+                if (dockPanel != null)
+                {
+                    dockPanel.Margin = new Thickness(0, 0, 6, 0);
+                }
+            }
+            else
+            {
+                ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                var dockPanel = (ResizeThumb.Parent as Grid).Children.OfType<DockPanel>().FirstOrDefault();
+                if (dockPanel != null)
+                {
+                    dockPanel.Margin = new Thickness(6, 0, 0, 0);
+                }
+            }
+        }
+
         private double _tempWidth;
 
         private void Thumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
@@ -189,14 +257,20 @@ namespace SideBarTaskSwitcher
 
         private void Thumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
         {
-            // AppBar is docked to the right, so dragging thumb to the left (negative e.HorizontalChange) increases width
-            _tempWidth -= e.HorizontalChange;
+            // If docked to the right, dragging left (negative delta) increases width
+            // If docked to the left, dragging right (positive delta) increases width
+            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_RIGHT)
+            {
+                _tempWidth -= e.HorizontalChange;
+            }
+            else
+            {
+                _tempWidth += e.HorizontalChange;
+            }
             
-            // Set reasonable min/max width constraints
             if (_tempWidth >= 100 && _tempWidth <= 800)
             {
                 this.Width = _tempWidth;
-                // Update only Window Visual position, do NOT push other windows to prevent lagging
                 _appBarManager?.PreviewWidth((int)_tempWidth);
             }
         }
@@ -205,7 +279,6 @@ namespace SideBarTaskSwitcher
         {
             if (_tempWidth >= 100 && _tempWidth <= 800)
             {
-                 // Push other windows now that drag has finished
                 _appBarManager?.UpdateWidth((int)_tempWidth);
             }
         }

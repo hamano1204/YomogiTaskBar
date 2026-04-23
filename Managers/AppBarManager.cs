@@ -36,7 +36,7 @@ namespace SideBarTaskSwitcher.Managers
             ABM_WINDOWPOSCHANGED = 9
         }
 
-        private enum ABEdge : uint
+        public enum ABEdge : uint
         {
             ABE_LEFT = 0,
             ABE_TOP = 1,
@@ -53,6 +53,23 @@ namespace SideBarTaskSwitcher.Managers
         private IntPtr _windowHandle;
         private int _currentWidth;
         private bool _isRegistered = false;
+        private ABEdge _currentEdge = ABEdge.ABE_RIGHT;
+
+        public ABEdge Edge
+        {
+            get => _currentEdge;
+            set
+            {
+                if (_currentEdge != value)
+                {
+                    _currentEdge = value;
+                    if (_isRegistered)
+                    {
+                        SizeAppBar();
+                    }
+                }
+            }
+        }
 
         public AppBarManager(Window window)
         {
@@ -68,7 +85,6 @@ namespace SideBarTaskSwitcher.Managers
             APPBARDATA abd = new APPBARDATA();
             abd.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
             abd.hWnd = _windowHandle;
-            // Optionally set uCallbackMessage if handling WM_APP messages
 
             SHAppBarMessage((uint)ABMsg.ABM_NEW, ref abd);
 
@@ -91,13 +107,23 @@ namespace SideBarTaskSwitcher.Managers
             var screenWidth = (int)SystemParameters.PrimaryScreenWidth;
             var screenHeight = (int)SystemParameters.PrimaryScreenHeight;
 
-            int left = screenWidth - width;
-            int right = screenWidth;
+            int left, right;
+            if (_currentEdge == ABEdge.ABE_LEFT)
+            {
+                left = 0;
+                right = width;
+            }
+            else
+            {
+                left = screenWidth - width;
+                right = screenWidth;
+            }
+
             int top = 0;
             int bottom = screenHeight;
 
-            // ウィンドウサイズ・位置のみ更新（他ウィンドウの再配置は行わない）
-            SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, 0x0014); // SWP_NOACTIVATE | SWP_NOZORDER
+            // SWP_NOACTIVATE | SWP_NOZORDER
+            SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, 0x0014);
         }
 
         public void Unregister()
@@ -117,27 +143,44 @@ namespace SideBarTaskSwitcher.Managers
             APPBARDATA abd = new APPBARDATA();
             abd.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
             abd.hWnd = _windowHandle;
-            abd.uEdge = (uint)ABEdge.ABE_RIGHT;
+            abd.uEdge = (uint)_currentEdge;
 
             var screenWidth = (int)SystemParameters.PrimaryScreenWidth;
             var screenHeight = (int)SystemParameters.PrimaryScreenHeight;
 
             abd.rc.top = 0;
             abd.rc.bottom = screenHeight;
-            abd.rc.right = screenWidth;
-            abd.rc.left = screenWidth - _currentWidth;
+
+            if (_currentEdge == ABEdge.ABE_LEFT)
+            {
+                abd.rc.left = 0;
+                abd.rc.right = _currentWidth;
+            }
+            else
+            {
+                abd.rc.left = screenWidth - _currentWidth;
+                abd.rc.right = screenWidth;
+            }
 
             // Query the system for an approved size and position.
             SHAppBarMessage((uint)ABMsg.ABM_QUERYPOS, ref abd);
 
             // Calculate the actual size
-            abd.rc.left = abd.rc.right - _currentWidth;
+            if (_currentEdge == ABEdge.ABE_LEFT)
+            {
+                abd.rc.right = abd.rc.left + _currentWidth;
+            }
+            else
+            {
+                abd.rc.left = abd.rc.right - _currentWidth;
+            }
 
             // Set the new position
             SHAppBarMessage((uint)ABMsg.ABM_SETPOS, ref abd);
 
-            // Move the WPF window to exactly this rectangle to act as the AppBar
+            // Move the WPF window
             SetWindowPos(abd.hWnd, IntPtr.Zero, abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, 0x0014);
         }
     }
 }
+// End of file

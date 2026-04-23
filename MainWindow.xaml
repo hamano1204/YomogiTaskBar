@@ -18,7 +18,7 @@
         Closing="Window_Closing">
     <Grid>
         <!-- Resize Handle -->
-        <Thumb HorizontalAlignment="Left" Width="6" Cursor="SizeWE" 
+        <Thumb x:Name="ResizeThumb" HorizontalAlignment="Left" Width="6" Cursor="SizeWE" 
                DragStarted="Thumb_DragStarted" DragDelta="Thumb_DragDelta" DragCompleted="Thumb_DragCompleted" Panel.ZIndex="1">
             <Thumb.Template>
                 <ControlTemplate TargetType="Thumb">
@@ -28,8 +28,8 @@
         </Thumb>
         
         <DockPanel Margin="6,0,0,0">
-            <!-- Header -->
-        <Border DockPanel.Dock="Top" Background="#33000000" Padding="10">
+            <!-- Header (Title Bar) -->
+        <Border DockPanel.Dock="Top" Background="#33000000" Padding="10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <TextBlock Text="Tasks" FontWeight="Bold" VerticalAlignment="Center" Foreground="#333"/>
                 <Button Content="✕" Width="24" Height="24" HorizontalAlignment="Right" 
