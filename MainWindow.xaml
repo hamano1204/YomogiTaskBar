@@ -15,7 +15,9 @@
         ResizeMode="NoResize"
         Background="#F5F5F5"
         Loaded="Window_Loaded"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave">
     <Grid>
         <!-- Resize Handle -->
         <Thumb x:Name="ResizeThumb" HorizontalAlignment="Left" Width="6" Cursor="SizeWE" 
@@ -32,9 +34,14 @@
         <Border DockPanel.Dock="Top" Background="#33000000" Padding="10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <TextBlock Text="Tasks" FontWeight="Bold" VerticalAlignment="Center" Foreground="#333"/>
-                <Button Content="✕" Width="24" Height="24" HorizontalAlignment="Right" 
-                        Click="CloseButton_Click" Background="Transparent" BorderThickness="0"
-                        Foreground="#333" FontWeight="Bold" Cursor="Hand"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="PinButton" Content="📌" Width="24" Height="24" 
+                            Click="PinButton_Click" Background="Transparent" BorderThickness="0"
+                            Foreground="#333" FontWeight="Bold" Cursor="Hand" ToolTip="ピン留めを切り替え"/>
+                    <Button Content="✕" Width="24" Height="24" 
+                            Click="CloseButton_Click" Background="Transparent" BorderThickness="0"
+                            Foreground="#333" FontWeight="Bold" Cursor="Hand"/>
+                </StackPanel>
             </Grid>
         </Border>
 

@@ -183,6 +183,111 @@ namespace SideBarTaskSwitcher
             }
         }
 
+        private bool _isPinned = true;
+        private DispatcherTimer _autoHideTimer;
+        private bool _isHidden = false;
+
+        private void PinButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isPinned = !_isPinned;
+            PinButton.Content = _isPinned ? "📌" : "📍";
+            ApplyMode();
+        }
+
+        private void ApplyMode()
+        {
+            if (_isPinned)
+            {
+                if (_autoHideTimer != null) _autoHideTimer.Stop();
+                _isHidden = false;
+                _appBarManager?.Register((int)this.Width);
+                _appBarManager?.SizeAppBar();
+                this.Topmost = false;
+            }
+            else
+            {
+                _appBarManager?.Unregister();
+                this.Topmost = true;
+                
+                if (_autoHideTimer == null)
+                {
+                    _autoHideTimer = new DispatcherTimer();
+                    _autoHideTimer.Interval = TimeSpan.FromMilliseconds(500);
+                    _autoHideTimer.Tick += (s, e) => HideWindow();
+                }
+            }
+        }
+
+        private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (!_isPinned)
+            {
+                _autoHideTimer?.Stop();
+                ShowWindow();
+            }
+        }
+
+        private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (!_isPinned && !_isHidden)
+            {
+                _autoHideTimer?.Start();
+            }
+        }
+
+        private void ShowWindow()
+        {
+            if (!_isHidden) return;
+            _isHidden = false;
+            
+            var screen = Forms.Screen.FromHandle(_windowHandle);
+            var bounds = screen.Bounds;
+            var source = PresentationSource.FromVisual(this);
+            double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
+            double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
+
+            double left, top = bounds.Top / dpiY;
+            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_LEFT)
+            {
+                left = bounds.Left / dpiX;
+            }
+            else
+            {
+                left = (bounds.Right / dpiX) - this.Width;
+            }
+
+            this.Left = left;
+            this.Top = top;
+        }
+
+        private void HideWindow()
+        {
+            if (_isPinned || _isHidden) return;
+            _autoHideTimer?.Stop();
+            _isHidden = true;
+
+            var screen = Forms.Screen.FromHandle(_windowHandle);
+            var bounds = screen.Bounds;
+            var source = PresentationSource.FromVisual(this);
+            double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
+            double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
+
+            double left, top = bounds.Top / dpiY;
+            const double visibleStrip = 2.0; // logical units
+
+            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_LEFT)
+            {
+                left = (bounds.Left / dpiX) - this.Width + visibleStrip;
+            }
+            else
+            {
+                left = (bounds.Right / dpiX) - visibleStrip;
+            }
+
+            this.Left = left;
+            this.Top = top;
+        }
+
         private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
@@ -192,7 +297,7 @@ namespace SideBarTaskSwitcher
                 
                 this.DragMove();
                 
-                // Re-docking logic will re-register the AppBar
+                // Re-docking logic will re-register the AppBar if pinned
                 DetectEdgeAndDock();
             }
         }
@@ -207,7 +312,6 @@ namespace SideBarTaskSwitcher
 
             if (mousePos.X < bounds.Left + threshold)
             {
-                // Always use force: true to ensure it docks to the new monitor even if edge is the same
                 DockTo(AppBarManager.ABEdge.ABE_LEFT, force: true, targetBounds: bounds);
             }
             else if (mousePos.X > bounds.Right - threshold)
@@ -216,26 +320,47 @@ namespace SideBarTaskSwitcher
             }
             else
             {
-                // Snap back to the current edge if dropped in the middle
                 DockTo(_appBarManager.Edge, force: true, targetBounds: bounds);
             }
         }
 
         private void DockTo(AppBarManager.ABEdge edge, bool force = false, System.Drawing.Rectangle? targetBounds = null)
         {
-            // Register if needed, setting the edge immediately to avoid intermediate jumps
-            _appBarManager?.Register((int)this.Width, initialEdge: edge);
+            if (_isPinned)
+            {
+                _appBarManager?.Register((int)this.Width, initialEdge: edge);
+            }
 
             _appBarManager.Edge = edge;
             
-            // Re-position the AppBar with specific monitor bounds (Single call to avoid flickering)
-            _appBarManager.SizeAppBar(targetBounds);
+            if (_isPinned)
+            {
+                _appBarManager.SizeAppBar(targetBounds);
+            }
+            else
+            {
+                // Manually position if not pinned
+                var bounds = targetBounds ?? Forms.Screen.FromHandle(_windowHandle).Bounds;
+                var source = PresentationSource.FromVisual(this);
+                double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
+                double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
+
+                this.Top = bounds.Top / dpiY;
+                this.Height = bounds.Height / dpiY;
+                if (edge == AppBarManager.ABEdge.ABE_LEFT)
+                {
+                    this.Left = bounds.Left / dpiX;
+                }
+                else
+                {
+                    this.Left = (bounds.Right / dpiX) - this.Width;
+                }
+            }
 
             // Adjust UI for the new edge
             if (edge == AppBarManager.ABEdge.ABE_LEFT)
             {
                 ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
-                // Margin adjust: content should not be under the thumb
                 var dockPanel = (ResizeThumb.Parent as Grid).Children.OfType<DockPanel>().FirstOrDefault();
                 if (dockPanel != null)
                 {
