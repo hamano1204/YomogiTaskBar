@@ -155,8 +155,12 @@ namespace SideBarTaskSwitcher.Managers
                 return true;
             }, IntPtr.Zero);
 
-            var normalWindows = windows.Where(w => !w.IsMinimized).ToList();
-            var minimizedWindows = windows.Where(w => w.IsMinimized).ToList();
+            var normalWindows = windows.Where(w => !w.IsMinimized)
+                .OrderBy(w => w.Title)
+                .ToList();
+            var minimizedWindows = windows.Where(w => w.IsMinimized)
+                .OrderBy(w => w.Title)
+                .ToList();
 
             var sortedWindows = new List<WindowItemViewModel>();
             sortedWindows.AddRange(normalWindows);
