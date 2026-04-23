@@ -21,7 +21,7 @@ public partial class App : System.Windows.Application
         {
             // App is already running!
             _mutex = null;
-            MessageBox.Show("アプリは既に起動しています。", "SideBar Task Switcher", MessageBoxButton.OK, MessageBoxImage.Information);
+            System.Windows.MessageBox.Show("アプリは既に起動しています。", "SideBar Task Switcher", MessageBoxButton.OK, MessageBoxImage.Information);
             System.Windows.Application.Current.Shutdown();
             return;
         }
