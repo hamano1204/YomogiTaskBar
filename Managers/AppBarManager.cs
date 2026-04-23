@@ -63,10 +63,8 @@ namespace SideBarTaskSwitcher.Managers
                 if (_currentEdge != value)
                 {
                     _currentEdge = value;
-                    if (_isRegistered)
-                    {
-                        SizeAppBar();
-                    }
+                    // Removed automatic SizeAppBar call here to prevent flickering
+                    // when multiple properties are updated at once.
                 }
             }
         }
@@ -76,11 +74,15 @@ namespace SideBarTaskSwitcher.Managers
             _windowHandle = new WindowInteropHelper(window).Handle;
         }
 
-        public void Register(int width)
+        public void Register(int width, ABEdge? initialEdge = null)
         {
             if (_isRegistered) return;
 
             _currentWidth = width;
+            if (initialEdge.HasValue)
+            {
+                _currentEdge = initialEdge.Value;
+            }
 
             APPBARDATA abd = new APPBARDATA();
             abd.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
@@ -88,9 +90,8 @@ namespace SideBarTaskSwitcher.Managers
 
             SHAppBarMessage((uint)ABMsg.ABM_NEW, ref abd);
 
-            SizeAppBar();
-
             _isRegistered = true;
+            // Caller should call SizeAppBar after registration
         }
 
         public void UpdateWidth(int width)
@@ -104,23 +105,23 @@ namespace SideBarTaskSwitcher.Managers
         {
             if (!_isRegistered) return;
             
-            var screenWidth = (int)SystemParameters.PrimaryScreenWidth;
-            var screenHeight = (int)SystemParameters.PrimaryScreenHeight;
+            var screen = System.Windows.Forms.Screen.FromHandle(_windowHandle);
+            var bounds = screen.Bounds;
 
             int left, right;
             if (_currentEdge == ABEdge.ABE_LEFT)
             {
-                left = 0;
-                right = width;
+                left = bounds.Left;
+                right = bounds.Left + width;
             }
             else
             {
-                left = screenWidth - width;
-                right = screenWidth;
+                left = bounds.Right - width;
+                right = bounds.Right;
             }
 
-            int top = 0;
-            int bottom = screenHeight;
+            int top = bounds.Top;
+            int bottom = bounds.Bottom;
 
             // SWP_NOACTIVATE | SWP_NOZORDER
             SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, 0x0014);
@@ -138,28 +139,27 @@ namespace SideBarTaskSwitcher.Managers
             _isRegistered = false;
         }
 
-        private void SizeAppBar()
+        public void SizeAppBar(System.Drawing.Rectangle? targetBounds = null)
         {
             APPBARDATA abd = new APPBARDATA();
             abd.cbSize = (uint)Marshal.SizeOf(typeof(APPBARDATA));
             abd.hWnd = _windowHandle;
             abd.uEdge = (uint)_currentEdge;
 
-            var screenWidth = (int)SystemParameters.PrimaryScreenWidth;
-            var screenHeight = (int)SystemParameters.PrimaryScreenHeight;
+            var bounds = targetBounds ?? System.Windows.Forms.Screen.FromHandle(_windowHandle).Bounds;
 
-            abd.rc.top = 0;
-            abd.rc.bottom = screenHeight;
+            abd.rc.top = bounds.Top;
+            abd.rc.bottom = bounds.Bottom;
 
             if (_currentEdge == ABEdge.ABE_LEFT)
             {
-                abd.rc.left = 0;
-                abd.rc.right = _currentWidth;
+                abd.rc.left = bounds.Left;
+                abd.rc.right = bounds.Left + _currentWidth;
             }
             else
             {
-                abd.rc.left = screenWidth - _currentWidth;
-                abd.rc.right = screenWidth;
+                abd.rc.left = bounds.Right - _currentWidth;
+                abd.rc.right = bounds.Right;
             }
 
             // Query the system for an approved size and position.
@@ -183,4 +183,5 @@ namespace SideBarTaskSwitcher.Managers
         }
     }
 }
+
 // End of file

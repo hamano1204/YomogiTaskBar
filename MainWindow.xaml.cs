@@ -54,6 +54,7 @@ namespace SideBarTaskSwitcher
 
             _appBarManager = new AppBarManager(this);
             _appBarManager.Register((int)this.Width);
+            _appBarManager.SizeAppBar();
 
             // Pin to all virtual desktops (Approach A)
             VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
@@ -186,7 +187,12 @@ namespace SideBarTaskSwitcher
         {
             if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
             {
+                // Temporarily unregister to allow free movement between monitors
+                _appBarManager?.Unregister();
+                
                 this.DragMove();
+                
+                // Re-docking logic will re-register the AppBar
                 DetectEdgeAndDock();
             }
         }
@@ -194,37 +200,36 @@ namespace SideBarTaskSwitcher
         private void DetectEdgeAndDock()
         {
             var mousePos = Forms.Control.MousePosition;
-            var screenWidth = Forms.Screen.PrimaryScreen.Bounds.Width;
+            var screen = Forms.Screen.FromPoint(mousePos);
+            var bounds = screen.Bounds;
 
-            // Use 10% threshold for docking
-            double threshold = screenWidth * 0.1;
+            double threshold = bounds.Width * 0.1;
 
-            if (mousePos.X < threshold)
+            if (mousePos.X < bounds.Left + threshold)
             {
-                DockTo(AppBarManager.ABEdge.ABE_LEFT);
+                // Always use force: true to ensure it docks to the new monitor even if edge is the same
+                DockTo(AppBarManager.ABEdge.ABE_LEFT, force: true, targetBounds: bounds);
             }
-            else if (mousePos.X > screenWidth - threshold)
+            else if (mousePos.X > bounds.Right - threshold)
             {
-                DockTo(AppBarManager.ABEdge.ABE_RIGHT);
+                DockTo(AppBarManager.ABEdge.ABE_RIGHT, force: true, targetBounds: bounds);
             }
             else
             {
                 // Snap back to the current edge if dropped in the middle
-                DockTo(_appBarManager.Edge, force: true);
+                DockTo(_appBarManager.Edge, force: true, targetBounds: bounds);
             }
         }
 
-        private void DockTo(AppBarManager.ABEdge edge, bool force = false)
+        private void DockTo(AppBarManager.ABEdge edge, bool force = false, System.Drawing.Rectangle? targetBounds = null)
         {
-            if (!force && _appBarManager.Edge == edge) return;
+            // Register if needed, setting the edge immediately to avoid intermediate jumps
+            _appBarManager?.Register((int)this.Width, initialEdge: edge);
 
             _appBarManager.Edge = edge;
             
-            // In case Edge property didn't trigger a re-position (because it was the same)
-            if (force)
-            {
-                _appBarManager.UpdateWidth((int)this.Width);
-            }
+            // Re-position the AppBar with specific monitor bounds (Single call to avoid flickering)
+            _appBarManager.SizeAppBar(targetBounds);
 
             // Adjust UI for the new edge
             if (edge == AppBarManager.ABEdge.ABE_LEFT)
