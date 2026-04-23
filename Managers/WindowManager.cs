@@ -120,6 +120,7 @@ namespace SideBarTaskSwitcher.Managers
         {
             var windows = new List<WindowItemViewModel>();
             var currentProcessId = Process.GetCurrentProcess().Id;
+            var allScreens = System.Windows.Forms.Screen.AllScreens;
 
             EnumWindows((hWnd, lParam) =>
             {
@@ -141,13 +142,21 @@ namespace SideBarTaskSwitcher.Managers
                         
                         if (!string.IsNullOrWhiteSpace(title) && !ignoredTitles.Contains(title))
                         {
+                            var screen = System.Windows.Forms.Screen.FromHandle(hWnd);
+                            int monitorIndex = 0;
+                            if (allScreens.Length > 1)
+                            {
+                                monitorIndex = Array.IndexOf(allScreens, allScreens.FirstOrDefault(s => s.DeviceName == screen.DeviceName)) + 1;
+                            }
+
                             windows.Add(new WindowItemViewModel
                             {
                                 Handle = hWnd,
                                 Title = title,
                                 ProcessId = (int)processId,
                                 IconSource = GetWindowIcon(hWnd),
-                                IsMinimized = IsIconic(hWnd)
+                                IsMinimized = IsIconic(hWnd),
+                                MonitorIndex = monitorIndex
                             });
                         }
                     }
@@ -156,10 +165,12 @@ namespace SideBarTaskSwitcher.Managers
             }, IntPtr.Zero);
 
             var normalWindows = windows.Where(w => !w.IsMinimized)
-                .OrderBy(w => w.Title)
+                .OrderBy(w => w.MonitorIndex)
+                .ThenBy(w => w.ProcessId)
                 .ToList();
             var minimizedWindows = windows.Where(w => w.IsMinimized)
-                .OrderBy(w => w.Title)
+                .OrderBy(w => w.MonitorIndex)
+                .ThenBy(w => w.ProcessId)
                 .ToList();
 
             var sortedWindows = new List<WindowItemViewModel>();

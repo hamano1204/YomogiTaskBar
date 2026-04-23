@@ -72,7 +72,14 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
+                            <Grid Grid.Column="0">
+                                <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
+                                <Border x:Name="MonitorBadge" Background="#AA000000" CornerRadius="7" Width="14" Height="14" 
+                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2">
+                                    <TextBlock Text="{Binding MonitorIndex}" Foreground="White" FontSize="9" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
                             <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
                                        Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
                             <Button Grid.Column="2" Content="✕" Width="20" Height="20" Margin="5,0,0,0"
@@ -87,10 +94,14 @@
                         <DataTrigger Binding="{Binding IsSeparator}" Value="True">
                             <Setter TargetName="ContentGrid" Property="Visibility" Value="Collapsed"/>
                             <Setter TargetName="SeparatorBorder" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                             <!-- Make minimized windows look slightly faded -->
                             <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
+                            <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
                         </DataTrigger>
                     </DataTemplate.Triggers>
                 </DataTemplate>

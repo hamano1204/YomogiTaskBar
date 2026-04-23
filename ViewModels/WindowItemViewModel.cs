@@ -11,5 +11,6 @@ namespace SideBarTaskSwitcher.ViewModels
         public ImageSource? IconSource { get; set; }
         public bool IsMinimized { get; set; }
         public bool IsSeparator { get; set; }
+        public int MonitorIndex { get; set; }
     }
 }
