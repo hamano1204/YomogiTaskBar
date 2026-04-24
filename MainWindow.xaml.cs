@@ -361,20 +361,16 @@ namespace SideBarTaskSwitcher
             if (edge == AppBarManager.ABEdge.ABE_LEFT)
             {
                 ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
-                var dockPanel = (ResizeThumb.Parent as Grid).Children.OfType<DockPanel>().FirstOrDefault();
-                if (dockPanel != null)
-                {
-                    dockPanel.Margin = new Thickness(0, 0, 6, 0);
-                }
+                WindowsList.Margin = new Thickness(0, 0, 6, 0);
+                HeaderBorder.Padding = new Thickness(10, 10, 16, 10);
+                FooterBorder.Padding = new Thickness(10, 10, 16, 10);
             }
             else
             {
                 ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                var dockPanel = (ResizeThumb.Parent as Grid).Children.OfType<DockPanel>().FirstOrDefault();
-                if (dockPanel != null)
-                {
-                    dockPanel.Margin = new Thickness(6, 0, 0, 0);
-                }
+                WindowsList.Margin = new Thickness(6, 0, 0, 0);
+                HeaderBorder.Padding = new Thickness(16, 10, 10, 10);
+                FooterBorder.Padding = new Thickness(16, 10, 10, 10);
             }
         }
 

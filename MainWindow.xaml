@@ -29,9 +29,9 @@
             </Thumb.Template>
         </Thumb>
         
-        <DockPanel Margin="6,0,0,0">
+        <DockPanel x:Name="MainDockPanel">
             <!-- Header (Title Bar) -->
-        <Border DockPanel.Dock="Top" Background="#33000000" Padding="10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Border x:Name="HeaderBorder" DockPanel.Dock="Top" Background="#33000000" Padding="16,10,10,10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <TextBlock Text="Tasks" FontWeight="Bold" VerticalAlignment="Center" Foreground="#333"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -46,7 +46,7 @@
         </Border>
 
         <!-- Virtual Desktop Footer -->
-        <Border DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="#11000000" Padding="10" 
+        <Border x:Name="FooterBorder" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="#11000000" Padding="16,10,10,10" 
                 Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="#22000000" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="#333" FontWeight="SemiBold"/>
@@ -60,7 +60,7 @@
         </Border>
 
         <!-- Window List -->
-        <ListBox x:Name="WindowsList" Background="Transparent" BorderThickness="0" 
+        <ListBox x:Name="WindowsList" Margin="6,0,0,0" Background="Transparent" BorderThickness="0" 
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  SelectionChanged="WindowsList_SelectionChanged">
             <ListBox.ItemTemplate>
