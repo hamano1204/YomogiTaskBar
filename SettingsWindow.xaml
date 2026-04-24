@@ -1,0 +1,211 @@
+﻿<Window x:Class="YomogiTaskBar.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="設定" Height="450" Width="720"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Topmost="True">
+    <Window.Resources>
+        <DropShadowEffect x:Key="WindowShadow" BlurRadius="15" Direction="-90" RenderingBias="Quality" ShadowDepth="2" Opacity="0.2"/>
+
+        <Style x:Key="ModernComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton" 
+                                          BorderBrush="{TemplateBinding BorderBrush}" 
+                                          BorderThickness="{TemplateBinding BorderThickness}" 
+                                          Background="{TemplateBinding Background}" 
+                                          ClickMode="Press" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="30" />
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Grid.Column="0" Margin="10,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                                <Path Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z" Fill="{DynamicResource PrimaryTextBrush}" />
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False"  Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="10,0,30,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                            <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="0,0,4,4"/>
+                                    <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="15" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Border.Effect>
+            <StaticResource ResourceKey="WindowShadow"/>
+        </Border.Effect>
+        <DockPanel LastChildFill="True">
+            <!-- Header -->
+            <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}" Padding="20,12" CornerRadius="15,15,0,0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Grid>
+                    <TextBlock Text="設定" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center"/>
+                    <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Center" 
+                            Click="Close_Click" Background="Transparent" BorderThickness="0" 
+                            Foreground="#999" FontSize="18" Cursor="Hand" Width="24" Height="24">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Foreground" Value="#E81123"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Footer -->
+            <Border DockPanel.Dock="Bottom" Background="{DynamicResource HeaderBackgroundBrush}" Padding="20,12" CornerRadius="0,0,15,15" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="YomogiTaskBar" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock Text=" v0.1.0" Foreground="#999" FontSize="10" VerticalAlignment="Bottom" Margin="5,0,0,1"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="キャンセル" Click="Close_Click" Width="90" Height="32" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,10,0" Cursor="Hand"/>
+                        <Button Content="保存" Click="Save_Click" Width="90" Height="32" Background="#007ACC" Foreground="White" BorderThickness="0" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#005A9E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Border Padding="20,15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Column: Appearance & Global -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="外観" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="テーマ設定" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
+                                <ComboBox x:Name="ThemeComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="ThemeComboBox_SelectionChanged">
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                            <Setter Property="Padding" Value="10,5"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+                                    <ComboBoxItem Content="システム設定に従う" Tag="System"/>
+                                    <ComboBoxItem Content="ライトモード" Tag="Light"/>
+                                    <ComboBoxItem Content="ダークモード" Tag="Dark"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="グローバルショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                            <StackPanel>
+                                <TextBlock Text="アプリをアクティブにする" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
+                                <Button x:Name="BtnGlobalActivate" Click="HotkeyButton_Click" Tag="GlobalActivate" 
+                                        Content="Win + Esc" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <TextBlock Text="※ 設定ボタンを押した後、登録したいキーを同時に押してください。" 
+                                   FontSize="10" Foreground="#999" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- Right Column: App Operations -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="アプリ操作ショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="5"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="最小化" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                        <Button x:Name="BtnMinimize" Click="HotkeyButton_Click" Tag="Minimize" 
+                                                Content="Ctrl + J" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="最大化解除" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                        <Button x:Name="BtnToggleMaximize" Click="HotkeyButton_Click" Tag="ToggleMaximize" 
+                                                Content="Ctrl + K" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="アプリを終了" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                <Button x:Name="BtnClose" Click="HotkeyButton_Click" Tag="Close" 
+                                        Content="Ctrl + L" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand" Margin="0,0,0,8"/>
+
+                                <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" 
+                                        Content="Ctrl + F" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand" Margin="0,0,0,8"/>
+
+                                <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" 
+                                        Content="Ctrl + D" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DockPanel>
+    </Border>
+</Window>

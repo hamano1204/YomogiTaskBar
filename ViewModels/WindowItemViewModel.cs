@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Windows.Media;
 
-namespace SideBarTaskSwitcher.ViewModels
+namespace YomogiTaskBar.ViewModels
 {
     public class WindowItemViewModel
     {

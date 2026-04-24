@@ -1,7 +1,7 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Threading;
 
-namespace SideBarTaskSwitcher;
+namespace YomogiTaskBar;
 
 /// <summary>
 /// Interaction logic for App.xaml
@@ -12,7 +12,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        const string appName = "SideBarTaskSwitcher-Unique-ID";
+        const string appName = "YomogiTaskBar-Unique-ID";
         bool createdNew;
 
         _mutex = new Mutex(true, appName, out createdNew);

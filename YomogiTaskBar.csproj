@@ -9,6 +9,10 @@
     <UseWindowsForms>true</UseWindowsForms>
     <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
     <Version>0.1.0</Version>
+    <AssemblyName>YomogiTaskBar</AssemblyName>
+    <RootNamespace>YomogiTaskBar</RootNamespace>
+    <ApplicationTitle>YomogiTaskBar</ApplicationTitle>
+    <Product>YomogiTaskBar</Product>
   </PropertyGroup>
 
 </Project>

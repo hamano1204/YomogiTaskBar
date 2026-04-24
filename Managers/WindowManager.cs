@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -8,9 +8,9 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Linq;
-using SideBarTaskSwitcher.ViewModels;
+using YomogiTaskBar.ViewModels;
 
-namespace SideBarTaskSwitcher.Managers
+namespace YomogiTaskBar.Managers
 {
     public class WindowManager
     {
@@ -244,9 +244,10 @@ namespace SideBarTaskSwitcher.Managers
 
             var targetScreen = allScreens[targetIndex];
 
-            // If maximized, restore, move, and re-maximize for smooth transition
+            // Restore if minimized or maximized for smooth transition
+            bool wasMinimized = IsIconic(handle);
             bool wasMaximized = IsZoomed(handle);
-            if (wasMaximized)
+            if (wasMinimized || wasMaximized)
             {
                 ShowWindow(handle, SW_RESTORE);
             }

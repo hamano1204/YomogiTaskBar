@@ -1,7 +1,7 @@
-﻿<Application x:Class="SideBarTaskSwitcher.App"
+﻿<Application x:Class="YomogiTaskBar.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SideBarTaskSwitcher"
+             xmlns:local="clr-namespace:YomogiTaskBar"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          

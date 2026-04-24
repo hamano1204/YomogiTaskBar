@@ -1,11 +1,11 @@
-<Window x:Class="SideBarTaskSwitcher.MainWindow"
+﻿<Window x:Class="YomogiTaskBar.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SideBarTaskSwitcher"
+        xmlns:local="clr-namespace:YomogiTaskBar"
         mc:Ignorable="d"
-        Title="SideBar Task Switcher" 
+        Title="YomogiTaskBar" 
         Height="Auto" 
         Width="280"
         WindowStyle="None" 
@@ -13,7 +13,8 @@
         Topmost="False"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Background="#F5F5F5"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0"
         Loaded="Window_Loaded"
         Closing="Window_Closing"
         MouseEnter="Window_MouseEnter"
@@ -31,26 +32,29 @@
         
         <DockPanel x:Name="MainDockPanel">
             <!-- Header (Title Bar) -->
-        <Border x:Name="HeaderBorder" DockPanel.Dock="Top" Background="#33000000" Padding="16,10,10,10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Border x:Name="HeaderBorder" DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
-                <TextBlock Text="Tasks" FontWeight="Bold" VerticalAlignment="Center" Foreground="#333"/>
+                <TextBlock Text="YomogiTaskBar" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="PinButton" Content="📌" Width="24" Height="24" 
                             Click="PinButton_Click" Background="Transparent" BorderThickness="0"
-                            Foreground="#333" FontWeight="Bold" Cursor="Hand" ToolTip="ピン留めを切り替え"/>
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="ピン留めを切り替え"/>
+                    <Button x:Name="SettingsButton" Content="⚙️" Width="24" Height="24" 
+                            Click="SettingsButton_Click" Background="Transparent" BorderThickness="0"
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="設定"/>
                     <Button Content="✕" Width="24" Height="24" 
                             Click="CloseButton_Click" Background="Transparent" BorderThickness="0"
-                            Foreground="#333" FontWeight="Bold" Cursor="Hand"/>
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Virtual Desktop Footer -->
-        <Border x:Name="FooterBorder" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="#11000000" Padding="16,10,10,10" 
-                Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="#22000000" BorderThickness="0,1,0,0">
+        <Border x:Name="FooterBorder" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" 
+                Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="#333" FontWeight="SemiBold"/>
-                <TextBlock Text=" ▾" Foreground="#666"/>
+                <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold"/>
+                <TextBlock Text=" ▾" Foreground="{DynamicResource SecondaryTextBrush}"/>
             </StackPanel>
             <Border.ContextMenu>
                 <ContextMenu x:Name="DesktopContextMenu">
@@ -82,14 +86,14 @@
                                 </Border>
                             </Grid>
                             <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
-                                       Margin="10,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                       Margin="10,0,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource PrimaryTextBrush}"/>
                             <Button Grid.Column="2" Content="✕" Width="20" Height="20" Margin="5,0,0,0"
                                     Background="Transparent" BorderThickness="0" Foreground="#A000"
                                     FontWeight="Bold" Cursor="Hand" Click="CloseItemButton_Click"
                                     ToolTip="このウィンドウを閉じる"/>
                         </Grid>
                         <!-- Separator line -->
-                        <Border x:Name="SeparatorBorder" Height="1" Background="#A0A0A0" Margin="10,5" Visibility="Collapsed"/>
+                        <Border x:Name="SeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
                     </Grid>
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsSeparator}" Value="True">

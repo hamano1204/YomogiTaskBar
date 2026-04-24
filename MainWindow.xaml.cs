@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
-using SideBarTaskSwitcher.Managers;
-using SideBarTaskSwitcher.ViewModels;
+using YomogiTaskBar.Managers;
+using YomogiTaskBar.ViewModels;
 using System.Reflection;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
@@ -13,8 +13,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Collections.Generic;
 using System.Windows.Media;
+using YomogiTaskBar.Models;
 
-namespace SideBarTaskSwitcher
+namespace YomogiTaskBar
 {
     public partial class MainWindow : Window
     {
@@ -24,10 +25,13 @@ namespace SideBarTaskSwitcher
         private DispatcherTimer _timer;
         private Forms.NotifyIcon _notifyIcon;
         private IntPtr _windowHandle;
+        private AppSettings _settings;
 
         public MainWindow()
         {
             InitializeComponent();
+            _settings = SettingsManager.Load();
+            ThemeManager.ApplyTheme(_settings.ThemeMode);
             _windowManager = new WindowManager();
             _windows = new ObservableCollection<WindowItemViewModel>();
             WindowsList.ItemsSource = _windows;
@@ -65,7 +69,7 @@ namespace SideBarTaskSwitcher
             RefreshWindowList();
 
             // Register global hotkey
-            HotkeyListener.Register(_windowHandle, HotkeyListener.HOTKEY_ID, HotkeyListener.MOD_WIN, HotkeyListener.VK_ESCAPE);
+            RegisterGlobalHotkey();
             ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
 
             // Set up 1-second timer
@@ -142,6 +146,18 @@ namespace SideBarTaskSwitcher
 
             // Update current desktop name
             CurrentDesktopText.Text = VirtualDesktopHelper.GetCurrentDesktopName();
+        }
+
+        private void RegisterGlobalHotkey()
+        {
+            HotkeyListener.Register(_windowHandle, HotkeyListener.HOTKEY_ID, 
+                HotkeyListener.GetWin32Modifiers(_settings.GlobalActivate.Modifiers), 
+                HotkeyListener.GetWin32VirtualKey(_settings.GlobalActivate.Key));
+        }
+
+        private void UnregisterGlobalHotkey()
+        {
+            HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
         }
 
         private void ComponentDispatcher_ThreadPreprocessMessage(ref MSG msg, ref bool handled)
@@ -254,6 +270,24 @@ namespace SideBarTaskSwitcher
             this.Close();
         }
 
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            UnregisterGlobalHotkey();
+            var settingsWindow = new SettingsWindow(_settings);
+            settingsWindow.Owner = this;
+            if (settingsWindow.ShowDialog() == true)
+            {
+                _settings = settingsWindow.CurrentSettings;
+                ThemeManager.ApplyTheme(_settings.ThemeMode);
+            }
+            else
+            {
+                // Restore original theme if cancelled
+                ThemeManager.ApplyTheme(_settings.ThemeMode);
+            }
+            RegisterGlobalHotkey();
+        }
+
         private void WindowsList_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             // Only activate if we actually clicked an item
@@ -281,53 +315,55 @@ namespace SideBarTaskSwitcher
                 WindowsList.SelectedItem = null;
                 e.Handled = true;
             }
-            else if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            else
             {
                 if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
                 {
                     bool shouldReactivate = true;
-                    switch (e.Key)
+                    
+                    if (_settings.Minimize.IsPressed(e))
                     {
-                        case Key.J:
-                            _windowManager.MinimizeWindow(selected.Handle);
-                            e.Handled = true;
-                            break;
-                        case Key.K:
-                            _windowManager.ToggleMaximize(selected.Handle);
-                            e.Handled = true;
-                            break;
-                        case Key.L:
-                            int index = WindowsList.SelectedIndex;
-                            _windowManager.CloseWindow(selected.Handle);
-                            
-                            // Optimistically remove from list to allow immediate selection inheritance
-                            _windows.Remove(selected);
-                            
-                            if (_windows.Count > 0)
+                        _windowManager.MinimizeWindow(selected.Handle);
+                        e.Handled = true;
+                    }
+                    else if (_settings.ToggleMaximize.IsPressed(e))
+                    {
+                        _windowManager.ToggleMaximize(selected.Handle);
+                        e.Handled = true;
+                    }
+                    else if (_settings.Close.IsPressed(e))
+                    {
+                        int index = WindowsList.SelectedIndex;
+                        _windowManager.CloseWindow(selected.Handle);
+                        
+                        _windows.Remove(selected);
+                        
+                        if (_windows.Count > 0)
+                        {
+                            int nextIndex = Math.Min(index, _windows.Count - 1);
+                            if (_windows[nextIndex].IsSeparator)
                             {
-                                int nextIndex = Math.Min(index, _windows.Count - 1);
-                                // If the new selection is a separator, try to move to the next real item
-                                if (_windows[nextIndex].IsSeparator)
-                                {
-                                    if (nextIndex + 1 < _windows.Count) nextIndex++;
-                                    else if (nextIndex - 1 >= 0) nextIndex--;
-                                }
-                                WindowsList.SelectedIndex = nextIndex;
+                                if (nextIndex + 1 < _windows.Count) nextIndex++;
+                                else if (nextIndex - 1 >= 0) nextIndex--;
                             }
-                            
-                            e.Handled = true;
-                            break;
-                        case Key.F:
-                            _windowManager.MoveToMonitor(selected.Handle, true);
-                            e.Handled = true;
-                            break;
-                        case Key.D:
-                            _windowManager.MoveToMonitor(selected.Handle, false);
-                            e.Handled = true;
-                            break;
-                        default:
-                            shouldReactivate = false;
-                            break;
+                            WindowsList.SelectedIndex = nextIndex;
+                        }
+                        
+                        e.Handled = true;
+                    }
+                    else if (_settings.NextMonitor.IsPressed(e))
+                    {
+                        _windowManager.MoveToMonitor(selected.Handle, true);
+                        e.Handled = true;
+                    }
+                    else if (_settings.PrevMonitor.IsPressed(e))
+                    {
+                        _windowManager.MoveToMonitor(selected.Handle, false);
+                        e.Handled = true;
+                    }
+                    else
+                    {
+                        shouldReactivate = false;
                     }
 
                     if (shouldReactivate)
