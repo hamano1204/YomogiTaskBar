@@ -62,7 +62,8 @@
         <!-- Window List -->
         <ListBox x:Name="WindowsList" Margin="6,0,0,0" Background="Transparent" BorderThickness="0" 
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 SelectionChanged="WindowsList_SelectionChanged">
+                 MouseLeftButtonUp="WindowsList_MouseLeftButtonUp"
+                 KeyDown="WindowsList_KeyDown">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="5" Background="Transparent">

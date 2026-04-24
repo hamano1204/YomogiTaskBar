@@ -44,10 +44,19 @@ namespace SideBarTaskSwitcher.Managers
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
         private static extern bool IsIconic(IntPtr hWnd);
 
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsZoomed(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
@@ -106,6 +115,8 @@ namespace SideBarTaskSwitcher.Managers
         private const uint WS_EX_TOOLWINDOW = 0x00000080;
         private const uint WS_EX_APPWINDOW = 0x00040000;
         
+        private const int SW_MAXIMIZE = 3;
+        private const int SW_MINIMIZE = 6;
         private const int SW_RESTORE = 9;
         private const uint WM_CLOSE = 0x0010;
 
@@ -198,6 +209,65 @@ namespace SideBarTaskSwitcher.Managers
         public void CloseWindow(IntPtr handle)
         {
             SendMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        public void MinimizeWindow(IntPtr handle)
+        {
+            ShowWindow(handle, SW_MINIMIZE);
+        }
+
+        public void ToggleMaximize(IntPtr handle)
+        {
+            if (IsZoomed(handle))
+            {
+                ShowWindow(handle, SW_RESTORE);
+            }
+            else
+            {
+                ShowWindow(handle, SW_MAXIMIZE);
+            }
+        }
+
+        public void MoveToMonitor(IntPtr handle, bool next)
+        {
+            var allScreens = System.Windows.Forms.Screen.AllScreens;
+            if (allScreens.Length <= 1) return;
+
+            var currentScreen = System.Windows.Forms.Screen.FromHandle(handle);
+            int currentIndex = Array.IndexOf(allScreens, allScreens.FirstOrDefault(s => s.DeviceName == currentScreen.DeviceName));
+            
+            int targetIndex;
+            if (next)
+                targetIndex = (currentIndex + 1) % allScreens.Length;
+            else
+                targetIndex = (currentIndex - 1 + allScreens.Length) % allScreens.Length;
+
+            var targetScreen = allScreens[targetIndex];
+
+            // If maximized, restore, move, and re-maximize for smooth transition
+            bool wasMaximized = IsZoomed(handle);
+            if (wasMaximized)
+            {
+                ShowWindow(handle, SW_RESTORE);
+            }
+
+            if (GetWindowRect(handle, out RECT rect))
+            {
+                int width = rect.right - rect.left;
+                int height = rect.bottom - rect.top;
+
+                // Calculate center position on target screen
+                int newX = targetScreen.Bounds.Left + (targetScreen.Bounds.Width - width) / 2;
+                int newY = targetScreen.Bounds.Top + (targetScreen.Bounds.Height - height) / 2;
+
+                // SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
+                SetWindowPos(handle, IntPtr.Zero, newX, newY, 0, 0, 0x0001 | 0x0004 | 0x0010);
+
+                if (wasMaximized)
+                {
+                    ShowWindow(handle, SW_MAXIMIZE);
+                }
+            }
         }
 
         [DllImport("dwmapi.dll")]

@@ -10,6 +10,9 @@ using Forms = System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Collections.Generic;
+using System.Windows.Media;
 
 namespace SideBarTaskSwitcher
 {
@@ -61,6 +64,10 @@ namespace SideBarTaskSwitcher
 
             RefreshWindowList();
 
+            // Register global hotkey
+            HotkeyListener.Register(_windowHandle, HotkeyListener.HOTKEY_ID, HotkeyListener.MOD_WIN, HotkeyListener.VK_ESCAPE);
+            ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
+
             // Set up 1-second timer
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
@@ -87,6 +94,8 @@ namespace SideBarTaskSwitcher
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            ComponentDispatcher.ThreadPreprocessMessage -= ComponentDispatcher_ThreadPreprocessMessage;
+            HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
             _appBarManager?.Unregister();
             if (_notifyIcon != null)
             {
@@ -97,6 +106,13 @@ namespace SideBarTaskSwitcher
 
         private void RefreshWindowList()
         {
+            // Capture current selection handle
+            IntPtr selectedHandle = IntPtr.Zero;
+            if (WindowsList.SelectedItem is WindowItemViewModel selected)
+            {
+                selectedHandle = selected.Handle;
+            }
+
             var windows = _windowManager.GetRunningWindows();
             
             _windows.Clear();
@@ -105,8 +121,80 @@ namespace SideBarTaskSwitcher
                 _windows.Add(w);
             }
 
+            // Restore selection if the window is still present
+            if (selectedHandle != IntPtr.Zero)
+            {
+                var target = _windows.FirstOrDefault(w => w.Handle == selectedHandle);
+                if (target != null)
+                {
+                    WindowsList.SelectedItem = target;
+
+                    // If the user is currently navigating with the keyboard, 
+                    // we must restore focus to the item container to keep the navigation anchor.
+                    if (this.IsActive && WindowsList.IsKeyboardFocusWithin)
+                    {
+                        WindowsList.UpdateLayout();
+                        var container = WindowsList.ItemContainerGenerator.ContainerFromItem(target) as ListBoxItem;
+                        container?.Focus();
+                    }
+                }
+            }
+
             // Update current desktop name
             CurrentDesktopText.Text = VirtualDesktopHelper.GetCurrentDesktopName();
+        }
+
+        private void ComponentDispatcher_ThreadPreprocessMessage(ref MSG msg, ref bool handled)
+        {
+            if (msg.message == 0x0312 && (int)msg.wParam == HotkeyListener.HOTKEY_ID)
+            {
+                OnHotkeyTriggered();
+                handled = true;
+            }
+        }
+
+        private void OnHotkeyTriggered()
+        {
+            IntPtr prevWindow = WindowManager.GetForegroundWindow();
+
+            // Reveal if hidden by Edge Trigger
+            if (_isHidden) ShowWindow();
+
+            this.Activate();
+            RefreshWindowList();
+
+            // Select the previously active window in the list
+            var target = _windows.FirstOrDefault(w => w.Handle == prevWindow);
+            if (target != null)
+            {
+                WindowsList.SelectedItem = target;
+                WindowsList.ScrollIntoView(target);
+            }
+            else if (_windows.Count > 0)
+            {
+                // Select the first non-separator item
+                var first = _windows.FirstOrDefault(w => !w.IsSeparator);
+                if (first != null)
+                {
+                    WindowsList.SelectedItem = first;
+                }
+            }
+
+            WindowsList.Focus();
+        }
+
+        private void ActivateSelectedItem()
+        {
+            if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
+            {
+                _windowManager.ActivateWindow(selected.Handle);
+                // We don't necessarily need to clear selection here if we want to keep focus
+                // but the existing behavior was to clear it.
+                // However, for keyboard nav, keeping it might be better.
+                // For now, let's clear it to match mouse behavior if preferred,
+                // but usually sidebar switchers close or lose focus.
+                if (!_isPinned) HideWindow();
+            }
         }
 
         private void DesktopFooter_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -166,13 +254,94 @@ namespace SideBarTaskSwitcher
             this.Close();
         }
 
-        private void WindowsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void WindowsList_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (WindowsList.SelectedItem is WindowItemViewModel selected)
+            // Only activate if we actually clicked an item
+            var dependencyObject = e.OriginalSource as DependencyObject;
+            while (dependencyObject != null && !(dependencyObject is ListBoxItem))
             {
-                _windowManager.ActivateWindow(selected.Handle);
-                WindowsList.SelectedItem = null; // Reset selection
+                dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
             }
+
+            if (dependencyObject is ListBoxItem)
+            {
+                ActivateSelectedItem();
+            }
+        }
+
+        private void WindowsList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ActivateSelectedItem();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                WindowsList.SelectedItem = null;
+                e.Handled = true;
+            }
+            else if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
+                {
+                    bool shouldReactivate = true;
+                    switch (e.Key)
+                    {
+                        case Key.J:
+                            _windowManager.MinimizeWindow(selected.Handle);
+                            e.Handled = true;
+                            break;
+                        case Key.K:
+                            _windowManager.ToggleMaximize(selected.Handle);
+                            e.Handled = true;
+                            break;
+                        case Key.L:
+                            int index = WindowsList.SelectedIndex;
+                            _windowManager.CloseWindow(selected.Handle);
+                            
+                            // Optimistically remove from list to allow immediate selection inheritance
+                            _windows.Remove(selected);
+                            
+                            if (_windows.Count > 0)
+                            {
+                                int nextIndex = Math.Min(index, _windows.Count - 1);
+                                // If the new selection is a separator, try to move to the next real item
+                                if (_windows[nextIndex].IsSeparator)
+                                {
+                                    if (nextIndex + 1 < _windows.Count) nextIndex++;
+                                    else if (nextIndex - 1 >= 0) nextIndex--;
+                                }
+                                WindowsList.SelectedIndex = nextIndex;
+                            }
+                            
+                            e.Handled = true;
+                            break;
+                        case Key.F:
+                            _windowManager.MoveToMonitor(selected.Handle, true);
+                            e.Handled = true;
+                            break;
+                        case Key.D:
+                            _windowManager.MoveToMonitor(selected.Handle, false);
+                            e.Handled = true;
+                            break;
+                        default:
+                            shouldReactivate = false;
+                            break;
+                    }
+
+                    if (shouldReactivate)
+                    {
+                        this.Activate();
+                        WindowsList.Focus();
+                    }
+                }
+            }
+        }
+
+        private void WindowsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Logic removed - activation now happens on MouseUp or Enter
         }
 
         private void CloseItemButton_Click(object sender, RoutedEventArgs e)
