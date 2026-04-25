@@ -49,10 +49,17 @@ namespace YomogiTaskBar
         private const int WS_EX_TOOLWINDOW = 0x00000080;
         private const int DWMWA_EXCLUDED_FROM_PEEK = 12;
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Window_SourceInitialized(object sender, EventArgs e)
         {
             _windowHandle = new WindowInteropHelper(this).Handle;
             
+            // Force pinned mode on startup for stability
+            _isPinned = true;
+            PinButton.Content = "📌";
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
             // Hide from Task View and Alt+Tab
             int exStyle = GetWindowLong(_windowHandle, GWL_EXSTYLE);
             SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
@@ -60,9 +67,21 @@ namespace YomogiTaskBar
             int True = 1;
             DwmSetWindowAttribute(_windowHandle, DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
 
+            // Restore window settings first (this sets position, edge, and pinned mode)
+            RestoreWindowSettings();
+
+            // Initialize AppBar manager AFTER edge is set
             _appBarManager = new AppBarManager(this);
-            _appBarManager.Register((int)this.Width);
-            _appBarManager.SizeAppBar();
+            
+            // Register AppBar with current edge setting for stability
+            if (_isPinned)
+            {
+                _appBarManager.Register((int)this.Width, _appBarManager.Edge);
+                _appBarManager.SizeAppBar();
+            }
+            
+            // Apply mode after AppBar is properly set up
+            ApplyMode();
 
             // Pin to all virtual desktops (Approach A)
             VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
@@ -99,6 +118,9 @@ namespace YomogiTaskBar
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            // Save window settings on close
+            SaveWindowSettings();
+            
             ComponentDispatcher.ThreadPreprocessMessage -= ComponentDispatcher_ThreadPreprocessMessage;
             HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
             _appBarManager?.Unregister();
@@ -589,8 +611,8 @@ namespace YomogiTaskBar
 
         private void Thumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
         {
-            // If docked to the right, dragging left (negative delta) increases width
-            // If docked to the left, dragging right (positive delta) increases width
+            // For right edge: dragging left (negative delta) increases width
+            // For left edge: dragging right (positive delta) increases width
             if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_RIGHT)
             {
                 _tempWidth -= e.HorizontalChange;
@@ -612,6 +634,98 @@ namespace YomogiTaskBar
             if (_tempWidth >= 100 && _tempWidth <= 800)
             {
                 _appBarManager?.UpdateWidth((int)_tempWidth);
+            }
+        }
+
+        private void SaveWindowSettings()
+        {
+            try
+            {
+                // Save current window settings
+                _settings.WindowSettings.IsAppBarMode = _isPinned;
+                _settings.WindowSettings.Edge = _appBarManager?.Edge ?? AppBarManager.ABEdge.ABE_RIGHT;
+                _settings.WindowSettings.WindowWidth = this.Width;
+                
+                // Get current monitor information
+                var currentScreen = Forms.Screen.FromHandle(_windowHandle);
+                var screens = Forms.Screen.AllScreens;
+                _settings.WindowSettings.MonitorIndex = Array.IndexOf(screens, currentScreen);
+                _settings.WindowSettings.LastMonitorCount = screens.Length;
+                
+                // Save settings
+                SettingsManager.Save(_settings);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't prevent app from closing
+                System.Diagnostics.Debug.WriteLine($"Failed to save window settings: {ex.Message}");
+            }
+        }
+
+        private void RestoreWindowSettings()
+        {
+            try
+            {
+                var screens = Forms.Screen.AllScreens;
+                
+                // Check if monitor count has changed - if so, reset to first monitor
+                if (_settings.WindowSettings.LastMonitorCount != screens.Length)
+                {
+                    _settings.WindowSettings.MonitorIndex = 0;
+                    _settings.WindowSettings.LastMonitorCount = screens.Length;
+                }
+                
+                // Validate monitor index
+                if (_settings.WindowSettings.MonitorIndex < 0 || _settings.WindowSettings.MonitorIndex >= screens.Length)
+                {
+                    _settings.WindowSettings.MonitorIndex = 0;
+                }
+                
+                // Set window width first
+                if (_settings.WindowSettings.WindowWidth >= 100 && _settings.WindowSettings.WindowWidth <= 800)
+                {
+                    this.Width = _settings.WindowSettings.WindowWidth;
+                }
+                
+                // Set pinned mode (but don't apply yet - we'll apply after AppBar is set up)
+                _isPinned = _settings.WindowSettings.IsAppBarMode;
+                PinButton.Content = _isPinned ? "📌" : "📍";
+                
+                // Move to specified monitor and position based on edge
+                if (_settings.WindowSettings.MonitorIndex >= 0 && _settings.WindowSettings.MonitorIndex < screens.Length)
+                {
+                    var targetScreen = screens[_settings.WindowSettings.MonitorIndex];
+                    
+                    // Calculate position based on edge
+                    var source = PresentationSource.FromVisual(this);
+                    double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
+                    double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
+                    
+                    this.Top = targetScreen.Bounds.Top / dpiY;
+                    this.Height = targetScreen.Bounds.Height / dpiY;
+                    
+                    // Position window according to saved edge
+                    if (_settings.WindowSettings.Edge == AppBarManager.ABEdge.ABE_LEFT)
+                    {
+                        this.Left = targetScreen.Bounds.Left / dpiX;
+                    }
+                    else
+                    {
+                        this.Left = (targetScreen.Bounds.Right / dpiX) - this.Width;
+                    }
+                }
+                
+                // Note: ApplyMode() will be called after AppBar is set up in Window_Loaded
+            }
+            catch (Exception ex)
+            {
+                // Log error but use defaults
+                System.Diagnostics.Debug.WriteLine($"Failed to restore window settings: {ex.Message}");
+                
+                // Use default settings
+                _isPinned = true;
+                PinButton.Content = "📌";
+                // Don't call ApplyMode() here - let Window_Loaded handle it
             }
         }
     }

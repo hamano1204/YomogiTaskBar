@@ -1,7 +1,7 @@
 ﻿<Window x:Class="YomogiTaskBar.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="設定" Height="520" Width="720"
+        Title="設定" Height="680" Width="520"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Topmost="True">
@@ -125,108 +125,100 @@
 
             <!-- Content -->
             <Border Padding="20,15">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <!-- Appearance Section -->
+                    <TextBlock Text="外観" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="テーマ設定" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
+                            <ComboBox x:Name="ThemeComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="ThemeComboBox_SelectionChanged">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                        <Setter Property="Padding" Value="10,5"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                                <ComboBoxItem Content="システム設定に従う" Tag="System"/>
+                                <ComboBoxItem Content="ライトモード" Tag="Light"/>
+                                <ComboBoxItem Content="ダークモード" Tag="Dark"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
 
-                    <!-- Left Column: Appearance & Global -->
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="外観" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
-                            <StackPanel>
-                                <TextBlock Text="テーマ設定" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
-                                <ComboBox x:Name="ThemeComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="ThemeComboBox_SelectionChanged">
-                                    <ComboBox.ItemContainerStyle>
-                                        <Style TargetType="ComboBoxItem">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
-                                            <Setter Property="Padding" Value="10,5"/>
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                        </Style>
-                                    </ComboBox.ItemContainerStyle>
-                                    <ComboBoxItem Content="システム設定に従う" Tag="System"/>
-                                    <ComboBoxItem Content="ライトモード" Tag="Light"/>
-                                    <ComboBoxItem Content="ダークモード" Tag="Dark"/>
-                                </ComboBox>
-                            </StackPanel>
-                        </Border>
+                    <!-- Startup Section -->
+                    <TextBlock Text="起動設定" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                        <CheckBox x:Name="LaunchOnStartupCheckBox"
+                                  Content="Windows起動時に自動で開始する"
+                                  Foreground="{DynamicResource PrimaryTextBrush}"
+                                  Checked="LaunchOnStartupCheckBox_Changed"
+                                  Unchecked="LaunchOnStartupCheckBox_Changed"/>
+                    </Border>
 
-                        <TextBlock Text="起動設定" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
-                            <CheckBox x:Name="LaunchOnStartupCheckBox"
-                                      Content="Windows起動時に自動で開始する"
-                                      Foreground="{DynamicResource PrimaryTextBrush}"
-                                      Checked="LaunchOnStartupCheckBox_Changed"
-                                      Unchecked="LaunchOnStartupCheckBox_Changed"/>
-                        </Border>
+                    <!-- Global Shortcuts Section -->
+                    <TextBlock Text="グローバルショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="アプリをアクティブにする" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
+                            <Button x:Name="BtnGlobalActivate" Click="HotkeyButton_Click" Tag="GlobalActivate" 
+                                    Content="Win + Esc" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                        </StackPanel>
+                    </Border>
 
-                        <TextBlock Text="グローバルショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
-                            <StackPanel>
-                                <TextBlock Text="アプリをアクティブにする" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
-                                <Button x:Name="BtnGlobalActivate" Click="HotkeyButton_Click" Tag="GlobalActivate" 
-                                        Content="Win + Esc" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                            </StackPanel>
-                        </Border>
-                        
-                        <TextBlock Text="※ 設定ボタンを押した後、登録したいキーを同時に押してください。" 
-                                   FontSize="10" Foreground="#999" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <!-- App Operation Shortcuts Section -->
+                    <TextBlock Text="アプリ操作ショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="5"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="5"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="最小化" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnMinimize" Click="HotkeyButton_Click" Tag="Minimize" 
+                                            Content="Ctrl + J" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="最大化解除" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnToggleMaximize" Click="HotkeyButton_Click" Tag="ToggleMaximize" 
+                                            Content="Ctrl + K" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="アプリを終了" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnClose" Click="HotkeyButton_Click" Tag="Close" 
+                                            Content="Ctrl + L" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                </StackPanel>
+                            </Grid>
 
-                    <!-- Right Column: App Operations -->
-                    <StackPanel Grid.Column="2">
-                        <TextBlock Text="アプリ操作ショートカット" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,8"/>
-                        <Border Background="{DynamicResource HeaderBackgroundBrush}" CornerRadius="8" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="5"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="5"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="最小化" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                        <Button x:Name="BtnMinimize" Click="HotkeyButton_Click" Tag="Minimize" 
-                                                Content="Ctrl + J" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="最大化解除" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                        <Button x:Name="BtnToggleMaximize" Click="HotkeyButton_Click" Tag="ToggleMaximize" 
-                                                Content="Ctrl + K" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="4">
-                                        <TextBlock Text="アプリを終了" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                        <Button x:Name="BtnClose" Click="HotkeyButton_Click" Tag="Close" 
-                                                Content="Ctrl + L" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="8"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                        <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" 
-                                                Content="Ctrl + D" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                        <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" 
-                                                Content="Ctrl + F" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" 
+                                            Content="Ctrl + U" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" 
+                                            Content="Ctrl + I" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    
+                    <TextBlock Text="※ 設定ボタンを押した後、登録したいキーを同時に押してください。" 
+                               FontSize="10" Foreground="#999" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
             </Border>
         </DockPanel>
     </Border>
