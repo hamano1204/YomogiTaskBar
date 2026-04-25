@@ -186,6 +186,8 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="5"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="5"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="最小化" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
@@ -197,19 +199,30 @@
                                         <Button x:Name="BtnToggleMaximize" Click="HotkeyButton_Click" Tag="ToggleMaximize" 
                                                 Content="Ctrl + K" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
                                     </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock Text="アプリを終了" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                        <Button x:Name="BtnClose" Click="HotkeyButton_Click" Tag="Close" 
+                                                Content="Ctrl + L" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    </StackPanel>
                                 </Grid>
 
-                                <TextBlock Text="アプリを終了" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                <Button x:Name="BtnClose" Click="HotkeyButton_Click" Tag="Close" 
-                                        Content="Ctrl + L" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand" Margin="0,0,0,8"/>
-
-                                <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" 
-                                        Content="Ctrl + F" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand" Margin="0,0,0,8"/>
-
-                                <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
-                                <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" 
-                                        Content="Ctrl + D" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                        <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" 
+                                                Content="Ctrl + D" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,4"/>
+                                        <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" 
+                                                Content="Ctrl + F" Padding="8,4" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
