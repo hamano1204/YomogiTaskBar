@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Threading;
 using YomogiTaskBar.Managers;
 using YomogiTaskBar.ViewModels;
+using YomogiTaskBar.Controllers;
+using YomogiTaskBar.Utilities;
 using System.Reflection;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
@@ -19,7 +21,8 @@ namespace YomogiTaskBar
 {
     public partial class MainWindow : Window
     {
-        private AppBarManager _appBarManager;
+        private AppBarController _appBarController;
+        private WindowStateManager _stateManager;
         private WindowManager _windowManager;
         private ObservableCollection<WindowItemViewModel> _windows;
         private DispatcherTimer _timer;
@@ -60,74 +63,141 @@ namespace YomogiTaskBar
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Hide from Task View and Alt+Tab
-            int exStyle = GetWindowLong(_windowHandle, GWL_EXSTYLE);
-            SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
-            
-            int True = 1;
-            DwmSetWindowAttribute(_windowHandle, DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
-
-            // Restore window settings first (this sets position, edge, and pinned mode)
-            RestoreWindowSettings();
-
-            // Initialize AppBar manager AFTER edge is set
-            _appBarManager = new AppBarManager(this);
-            
-            // Register AppBar with current edge setting for stability
-            if (_isPinned)
+            try
             {
-                _appBarManager.Register((int)this.Width, _appBarManager.Edge);
-                _appBarManager.SizeAppBar();
-            }
-            
-            // Apply mode after AppBar is properly set up
-            ApplyMode();
+                Logger.LogOperationStart("Window initialization", "MainWindow");
 
-            // Pin to all virtual desktops (Approach A)
-            VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
+                // Hide from Task View and Alt+Tab
+                int exStyle = GetWindowLong(_windowHandle, GWL_EXSTYLE);
+                SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
+                
+                int True = 1;
+                DwmSetWindowAttribute(_windowHandle, DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
 
-            RefreshWindowList();
+                // Initialize controllers
+                _stateManager = new WindowStateManager(this, _windowHandle, _settings);
+                _appBarController = new AppBarController(this, _windowHandle);
+                _appBarController.Initialize();
 
-            // Register global hotkey
-            RegisterGlobalHotkey();
-            ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
+                // Restore window settings
+                var restoredSettings = _stateManager.RestoreWindowSettings();
+                
+                // Register AppBar with restored edge setting
+                _appBarController.RegisterAppBar((int)this.Width, restoredSettings.Edge);
+                
+                // Update UI for restored edge
+                UpdateUIForEdge(restoredSettings.Edge);
 
-            // Set up 1-second timer
-            _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromSeconds(1);
-            _timer.Tick += (s, ev) => 
-            {
-                VirtualDesktopHelper.MoveToCurrentDesktop(_windowHandle);
+                // Pin to all virtual desktops
+                VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
+
                 RefreshWindowList();
-            };
-            _timer.Start();
 
-            // Set up NotifyIcon for System Tray
-            _notifyIcon = new Forms.NotifyIcon();
-            _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
-            _notifyIcon.Visible = true;
-            _notifyIcon.Text = "YomogiTaskBar";
+                // Register global hotkey
+                RegisterGlobalHotkey();
+                ComponentDispatcher.ThreadPreprocessMessage += ComponentDispatcher_ThreadPreprocessMessage;
 
-            var contextMenuStrip = new Forms.ContextMenuStrip();
-            var closeMenuItem = new Forms.ToolStripMenuItem("閉じる");
-            closeMenuItem.Click += (s, args) => this.Close();
-            contextMenuStrip.Items.Add(closeMenuItem);
+                // Set up refresh timer
+                _timer = new DispatcherTimer();
+                _timer.Interval = TimeSpan.FromSeconds(WindowConstants.RefreshIntervalSeconds);
+                _timer.Tick += (s, ev) => 
+                {
+                    VirtualDesktopHelper.MoveToCurrentDesktop(_windowHandle);
+                    RefreshWindowList();
+                };
+                _timer.Start();
 
-            _notifyIcon.ContextMenuStrip = contextMenuStrip;
+                // Set up NotifyIcon for System Tray
+                SetupNotifyIcon();
+
+                Logger.LogOperationComplete("Window initialization", "MainWindow");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to initialize window", ex, "MainWindow");
+            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Save window settings on close
-            SaveWindowSettings();
-            
-            ComponentDispatcher.ThreadPreprocessMessage -= ComponentDispatcher_ThreadPreprocessMessage;
-            HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
-            _appBarManager?.Unregister();
-            if (_notifyIcon != null)
+            try
             {
-                _notifyIcon.Visible = false;
-                _notifyIcon.Dispose();
+                Logger.LogOperationStart("Window cleanup", "MainWindow");
+
+                // Save window settings on close
+                if (_appBarController != null && _stateManager != null)
+                {
+                    _stateManager.SaveWindowSettings(_appBarController.CurrentEdge);
+                }
+                
+                ComponentDispatcher.ThreadPreprocessMessage -= ComponentDispatcher_ThreadPreprocessMessage;
+                HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
+                
+                // Cleanup controllers
+                _appBarController?.Dispose();
+                
+                if (_notifyIcon != null)
+                {
+                    _notifyIcon.Visible = false;
+                    _notifyIcon.Dispose();
+                }
+
+                Logger.LogOperationComplete("Window cleanup", "MainWindow");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to cleanup window", ex, "MainWindow");
+            }
+        }
+
+        private void SetupNotifyIcon()
+        {
+            try
+            {
+                _notifyIcon = new Forms.NotifyIcon();
+                _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
+                _notifyIcon.Visible = true;
+                _notifyIcon.Text = "YomogiTaskBar";
+
+                var contextMenuStrip = new Forms.ContextMenuStrip();
+                var closeMenuItem = new Forms.ToolStripMenuItem("閉じる");
+                closeMenuItem.Click += (s, args) => this.Close();
+                contextMenuStrip.Items.Add(closeMenuItem);
+
+                _notifyIcon.ContextMenuStrip = contextMenuStrip;
+                
+                Logger.LogInfo("NotifyIcon setup completed", "MainWindow");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to setup NotifyIcon", ex, "MainWindow");
+            }
+        }
+
+        private void UpdateUIForEdge(AppBarManager.ABEdge edge)
+        {
+            try
+            {
+                if (edge == AppBarManager.ABEdge.ABE_LEFT)
+                {
+                    ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
+                    WindowsList.Margin = new Thickness(0, 0, 6, 0);
+                    HeaderBorder.Padding = new Thickness(10, 10, 16, 10);
+                    FooterBorder.Padding = new Thickness(10, 10, 16, 10);
+                }
+                else
+                {
+                    ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                    WindowsList.Margin = new Thickness(6, 0, 0, 0);
+                    HeaderBorder.Padding = new Thickness(16, 10, 10, 10);
+                    FooterBorder.Padding = new Thickness(16, 10, 10, 10);
+                }
+                
+                Logger.LogDebug($"UI updated for edge: {edge}", "MainWindow");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to update UI for edge", ex, "MainWindow");
             }
         }
 

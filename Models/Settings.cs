@@ -29,11 +29,46 @@ namespace YomogiTaskBar.Models
 
     public class WindowSettings
     {
-        public bool IsAppBarMode { get; set; } = true; // AppBar vs Floating mode
-        public AppBarManager.ABEdge Edge { get; set; } = AppBarManager.ABEdge.ABE_RIGHT; // Left/Right edge
-        public int MonitorIndex { get; set; } = 0; // 0 = first monitor
-        public double WindowWidth { get; set; } = 300; // Window width
-        public int LastMonitorCount { get; set; } = 1; // For detecting monitor changes
+        private double _windowWidth = WindowConstants.DefaultWindowWidth;
+        private int _monitorIndex = 0;
+        private int _lastMonitorCount = 1;
+
+        public bool IsAppBarMode { get; set; } = true; // Always pinned mode for stability
+
+        public AppBarManager.ABEdge Edge { get; set; } = AppBarManager.ABEdge.ABE_RIGHT;
+
+        public int MonitorIndex
+        {
+            get => _monitorIndex;
+            set => _monitorIndex = Math.Max(0, value);
+        }
+
+        public double WindowWidth
+        {
+            get => _windowWidth;
+            set => _windowWidth = Math.Clamp(value, WindowConstants.MinWindowWidth, WindowConstants.MaxWindowWidth);
+        }
+
+        public int LastMonitorCount
+        {
+            get => _lastMonitorCount;
+            set => _lastMonitorCount = Math.Max(1, value);
+        }
+
+        /// <summary>
+        /// Validates and fixes any invalid settings
+        /// </summary>
+        public void ValidateAndFix()
+        {
+            // Ensure window width is within bounds
+            WindowWidth = _windowWidth;
+            
+            // Ensure monitor index is non-negative
+            MonitorIndex = _monitorIndex;
+            
+            // Ensure last monitor count is at least 1
+            LastMonitorCount = _lastMonitorCount;
+        }
     }
 
     public class AppSettings
