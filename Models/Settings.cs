@@ -29,6 +29,7 @@ namespace YomogiTaskBar.Models
     public class AppSettings
     {
         public string ThemeMode { get; set; } = "System"; // Light, Dark, System
+        public bool LaunchOnStartup { get; set; } = false;
         public ShortcutConfig GlobalActivate { get; set; } = new ShortcutConfig { Key = Key.Escape, Modifiers = ModifierKeys.Windows };
         public ShortcutConfig Minimize { get; set; } = new ShortcutConfig { Key = Key.J, Modifiers = ModifierKeys.Control };
         public ShortcutConfig ToggleMaximize { get; set; } = new ShortcutConfig { Key = Key.K, Modifiers = ModifierKeys.Control };

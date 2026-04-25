@@ -13,6 +13,7 @@
     <RootNamespace>YomogiTaskBar</RootNamespace>
     <ApplicationTitle>YomogiTaskBar</ApplicationTitle>
     <Product>YomogiTaskBar</Product>
+    <ApplicationIcon>clover-2.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

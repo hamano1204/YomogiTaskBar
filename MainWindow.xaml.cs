@@ -31,6 +31,7 @@ namespace YomogiTaskBar
         {
             InitializeComponent();
             _settings = SettingsManager.Load();
+            _settings.LaunchOnStartup = StartupManager.IsEnabled();
             ThemeManager.ApplyTheme(_settings.ThemeMode);
             _windowManager = new WindowManager();
             _windows = new ObservableCollection<WindowItemViewModel>();
@@ -86,7 +87,7 @@ namespace YomogiTaskBar
             _notifyIcon = new Forms.NotifyIcon();
             _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
             _notifyIcon.Visible = true;
-            _notifyIcon.Text = "SideBar Task Switcher";
+            _notifyIcon.Text = "YomogiTaskBar";
 
             var contextMenuStrip = new Forms.ContextMenuStrip();
             var closeMenuItem = new Forms.ToolStripMenuItem("閉じる");

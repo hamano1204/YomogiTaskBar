@@ -22,6 +22,7 @@ namespace YomogiTaskBar
             CurrentSettings = new AppSettings
             {
                 ThemeMode = settings.ThemeMode,
+                LaunchOnStartup = settings.LaunchOnStartup,
                 GlobalActivate = new ShortcutConfig { Key = settings.GlobalActivate.Key, Modifiers = settings.GlobalActivate.Modifiers },
                 Minimize = new ShortcutConfig { Key = settings.Minimize.Key, Modifiers = settings.Minimize.Modifiers },
                 ToggleMaximize = new ShortcutConfig { Key = settings.ToggleMaximize.Key, Modifiers = settings.ToggleMaximize.Modifiers },
@@ -42,6 +43,7 @@ namespace YomogiTaskBar
             BtnClose.Content = CurrentSettings.Close.ToString();
             BtnNextMonitor.Content = CurrentSettings.NextMonitor.ToString();
             BtnPrevMonitor.Content = CurrentSettings.PrevMonitor.ToString();
+            LaunchOnStartupCheckBox.IsChecked = CurrentSettings.LaunchOnStartup;
 
             // Initialize Theme ComboBox
             foreach (ComboBoxItem item in ThemeComboBox.Items)
@@ -150,6 +152,7 @@ namespace YomogiTaskBar
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            StartupManager.Apply(CurrentSettings.LaunchOnStartup);
             SettingsManager.Save(CurrentSettings);
             this.DialogResult = true;
             this.Close();
@@ -169,6 +172,12 @@ namespace YomogiTaskBar
                 CurrentSettings.ThemeMode = item.Tag.ToString();
                 ThemeManager.ApplyTheme(CurrentSettings.ThemeMode);
             }
+        }
+
+        private void LaunchOnStartupCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            CurrentSettings.LaunchOnStartup = LaunchOnStartupCheckBox.IsChecked == true;
         }
     }
 }
