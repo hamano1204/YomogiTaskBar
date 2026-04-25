@@ -1,5 +1,8 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using YomogiTaskBar.Managers;
 using YomogiTaskBar.Models;
 using YomogiTaskBar.Utilities;
@@ -14,7 +17,7 @@ namespace YomogiTaskBar.Controllers
     {
         private readonly Window _window;
         private readonly IntPtr _windowHandle;
-        private AppBarManager _appBarManager;
+        private AppBarManager? _appBarManager;
         private bool _isPinned = true;
         private bool _isHidden = false;
 
@@ -126,7 +129,7 @@ namespace YomogiTaskBar.Controllers
                 var screen = Forms.Screen.FromHandle(_windowHandle);
                 var bounds = screen.Bounds;
                 
-                var source = System.Windows.Interop.PresentationSource.FromVisual(_window);
+                var source = PresentationSource.FromVisual(_window);
                 double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? WindowConstants.DefaultDpiX;
                 double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? WindowConstants.DefaultDpiY;
 
@@ -159,7 +162,7 @@ namespace YomogiTaskBar.Controllers
                 var screen = Forms.Screen.FromHandle(_windowHandle);
                 var bounds = screen.Bounds;
                 
-                var source = System.Windows.Interop.PresentationSource.FromVisual(_window);
+                var source = PresentationSource.FromVisual(_window);
                 double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? WindowConstants.DefaultDpiX;
                 double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? WindowConstants.DefaultDpiY;
 
@@ -201,7 +204,7 @@ namespace YomogiTaskBar.Controllers
                 {
                     // Manually position if not pinned
                     var bounds = targetBounds ?? Forms.Screen.FromHandle(_windowHandle).Bounds;
-                    var source = System.Windows.Interop.PresentationSource.FromVisual(_window);
+                    var source = PresentationSource.FromVisual(_window);
                     double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? WindowConstants.DefaultDpiX;
                     double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? WindowConstants.DefaultDpiY;
 

@@ -21,12 +21,12 @@ namespace YomogiTaskBar
 {
     public partial class MainWindow : Window
     {
-        private AppBarController _appBarController;
-        private WindowStateManager _stateManager;
+        private AppBarController? _appBarController;
+        private WindowStateManager? _stateManager;
         private WindowManager _windowManager;
         private ObservableCollection<WindowItemViewModel> _windows;
-        private DispatcherTimer _timer;
-        private Forms.NotifyIcon _notifyIcon;
+        private DispatcherTimer? _timer;
+        private Forms.NotifyIcon? _notifyIcon;
         private IntPtr _windowHandle;
         private AppSettings _settings;
 
@@ -482,13 +482,14 @@ namespace YomogiTaskBar
         }
 
         private bool _isPinned = true;
-        private DispatcherTimer _autoHideTimer;
+        private DispatcherTimer? _autoHideTimer;
         private bool _isHidden = false;
 
         private void PinButton_Click(object sender, RoutedEventArgs e)
         {
             _isPinned = !_isPinned;
             PinButton.Content = _isPinned ? "📌" : "📍";
+            _appBarController?.TogglePinMode();
             ApplyMode();
         }
 
@@ -498,13 +499,12 @@ namespace YomogiTaskBar
             {
                 if (_autoHideTimer != null) _autoHideTimer.Stop();
                 _isHidden = false;
-                _appBarManager?.Register((int)this.Width);
-                _appBarManager?.SizeAppBar();
+                _appBarController?.RegisterAppBar((int)this.Width);
                 this.Topmost = false;
             }
             else
             {
-                _appBarManager?.Unregister();
+                _appBarController?.UnregisterAppBar();
                 this.Topmost = true;
                 
                 if (_autoHideTimer == null)
@@ -521,7 +521,7 @@ namespace YomogiTaskBar
             if (!_isPinned)
             {
                 _autoHideTimer?.Stop();
-                ShowWindow();
+                _appBarController?.ShowWindow();
             }
         }
 
@@ -545,7 +545,7 @@ namespace YomogiTaskBar
             double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
 
             double left, top = bounds.Top / dpiY;
-            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_LEFT)
+            if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_LEFT)
             {
                 left = bounds.Left / dpiX;
             }
@@ -573,7 +573,7 @@ namespace YomogiTaskBar
             double left, top = bounds.Top / dpiY;
             const double visibleStrip = 2.0; // logical units
 
-            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_LEFT)
+            if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_LEFT)
             {
                 left = (bounds.Left / dpiX) - this.Width + visibleStrip;
             }
@@ -591,7 +591,7 @@ namespace YomogiTaskBar
             if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
             {
                 // Temporarily unregister to allow free movement between monitors
-                _appBarManager?.Unregister();
+                _appBarController?.UnregisterAppBar();
                 
                 this.DragMove();
                 
@@ -618,7 +618,7 @@ namespace YomogiTaskBar
             }
             else
             {
-                DockTo(_appBarManager.Edge, force: true, targetBounds: bounds);
+                DockTo(_appBarController?.CurrentEdge ?? AppBarManager.ABEdge.ABE_RIGHT, force: true, targetBounds: bounds);
             }
         }
 
@@ -626,16 +626,12 @@ namespace YomogiTaskBar
         {
             if (_isPinned)
             {
-                _appBarManager?.Register((int)this.Width, initialEdge: edge);
+                _appBarController?.RegisterAppBar((int)this.Width, edge);
             }
 
-            _appBarManager.Edge = edge;
+            _appBarController?.DockToEdge(edge, targetBounds);
             
-            if (_isPinned)
-            {
-                _appBarManager.SizeAppBar(targetBounds);
-            }
-            else
+            if (!_isPinned)
             {
                 // Manually position if not pinned
                 var bounds = targetBounds ?? Forms.Screen.FromHandle(_windowHandle).Bounds;
@@ -683,7 +679,7 @@ namespace YomogiTaskBar
         {
             // For right edge: dragging left (negative delta) increases width
             // For left edge: dragging right (positive delta) increases width
-            if (_appBarManager.Edge == AppBarManager.ABEdge.ABE_RIGHT)
+            if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_RIGHT)
             {
                 _tempWidth -= e.HorizontalChange;
             }
@@ -695,7 +691,7 @@ namespace YomogiTaskBar
             if (_tempWidth >= 100 && _tempWidth <= 800)
             {
                 this.Width = _tempWidth;
-                _appBarManager?.PreviewWidth((int)_tempWidth);
+                _appBarController?.PreviewWidth((int)_tempWidth);
             }
         }
 
@@ -703,7 +699,7 @@ namespace YomogiTaskBar
         {
             if (_tempWidth >= 100 && _tempWidth <= 800)
             {
-                _appBarManager?.UpdateWidth((int)_tempWidth);
+                _appBarController?.UpdateWidth((int)_tempWidth);
             }
         }
 
@@ -713,7 +709,7 @@ namespace YomogiTaskBar
             {
                 // Save current window settings
                 _settings.WindowSettings.IsAppBarMode = _isPinned;
-                _settings.WindowSettings.Edge = _appBarManager?.Edge ?? AppBarManager.ABEdge.ABE_RIGHT;
+                _settings.WindowSettings.Edge = _appBarController?.CurrentEdge ?? AppBarManager.ABEdge.ABE_RIGHT;
                 _settings.WindowSettings.WindowWidth = this.Width;
                 
                 // Get current monitor information

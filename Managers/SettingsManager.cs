@@ -31,8 +31,8 @@ namespace YomogiTaskBar.Managers
         {
             try
             {
-                string directory = Path.GetDirectoryName(SettingsPath);
-                if (!Directory.Exists(directory))
+                string? directory = Path.GetDirectoryName(SettingsPath);
+                if (directory != null && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }

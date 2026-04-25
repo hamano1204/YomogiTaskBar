@@ -34,7 +34,7 @@ namespace YomogiTaskBar.Utilities
         /// <param name="message">The error message to log</param>
         /// <param name="exception">Optional exception object for additional details</param>
         /// <param name="category">Optional category for the message</param>
-        public static void LogError(string message, Exception exception = null, string category = "General")
+        public static void LogError(string message, Exception? exception = null, string category = "General")
         {
             var errorText = exception != null 
                 ? $"{message}: {exception.Message}" 
@@ -85,7 +85,7 @@ namespace YomogiTaskBar.Utilities
         /// <param name="operation">The operation that failed</param>
         /// <param name="exception">Optional exception object for additional details</param>
         /// <param name="category">Optional category for the message</param>
-        public static void LogOperationFailed(string operation, Exception exception = null, string category = "General")
+        public static void LogOperationFailed(string operation, Exception? exception = null, string category = "General")
         {
             var errorText = exception != null 
                 ? $"{operation}: {exception.Message}" 

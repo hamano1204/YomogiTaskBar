@@ -27,13 +27,17 @@ namespace YomogiTaskBar.Managers
 
     public static class VirtualDesktopHelper
     {
-        private static readonly IVirtualDesktopManager _manager;
+        private static readonly IVirtualDesktopManager? _manager;
 
         static VirtualDesktopHelper()
         {
             try
             {
-                _manager = (IVirtualDesktopManager)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a")));
+                var type = Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a"));
+                if (type != null)
+                {
+                    _manager = (IVirtualDesktopManager?)Activator.CreateInstance(type);
+                }
             }
             catch { }
         }

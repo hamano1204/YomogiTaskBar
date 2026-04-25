@@ -10,7 +10,7 @@ namespace YomogiTaskBar
     public partial class SettingsWindow : Window
     {
         public AppSettings CurrentSettings { get; private set; }
-        private System.Windows.Controls.Button _activeButton;
+        private System.Windows.Controls.Button? _activeButton;
         private bool _isInitializing = false;
 
         public SettingsWindow(AppSettings settings)
@@ -77,8 +77,8 @@ namespace YomogiTaskBar
         {
             if (_activeButton == null) return;
 
-            string tag = _activeButton.Tag.ToString();
-            ShortcutConfig config = tag switch
+            string? tag = _activeButton.Tag?.ToString();
+            ShortcutConfig? config = tag switch
             {
                 "GlobalActivate" => CurrentSettings.GlobalActivate,
                 "Minimize" => CurrentSettings.Minimize,
@@ -128,7 +128,7 @@ namespace YomogiTaskBar
 
             var config = new ShortcutConfig { Key = key, Modifiers = modifiers };
             
-            string tag = _activeButton.Tag.ToString();
+            string tag = _activeButton.Tag?.ToString() ?? string.Empty;
             switch (tag)
             {
                 case "GlobalActivate": CurrentSettings.GlobalActivate = config; break;
@@ -167,9 +167,9 @@ namespace YomogiTaskBar
         private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isInitializing) return;
-            if (ThemeComboBox.SelectedItem is ComboBoxItem item)
+            if (ThemeComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
-                CurrentSettings.ThemeMode = item.Tag.ToString();
+                CurrentSettings.ThemeMode = item.Tag.ToString() ?? "System";
                 ThemeManager.ApplyTheme(CurrentSettings.ThemeMode);
             }
         }
