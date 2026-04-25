@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -9,143 +9,38 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Linq;
 using YomogiTaskBar.ViewModels;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar.Managers
 {
     public class WindowManager
     {
-        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern bool IsWindowVisible(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
-
-        [DllImport("user32.dll", ExactSpelling = true)]
-        private static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetLastActivePopup(IntPtr hWnd);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern bool IsIconic(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        [DllImport("user32.dll")]
-        private static extern bool IsZoomed(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll", EntryPoint = "GetClassLongPtr")]
-        private static extern IntPtr GetClassLongPtr64(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", EntryPoint = "GetClassLong")]
-        private static extern IntPtr GetClassLongPtr32(IntPtr hWnd, int nIndex);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, [Out] StringBuilder lpExeName, ref int lpdwSize);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool CloseHandle(IntPtr hObject);
-
-        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
-        private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
-
-        [DllImport("user32.dll")]
-        private static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        private struct SHFILEINFO
-        {
-            public IntPtr hIcon;
-            public int iIcon;
-            public uint dwAttributes;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-            public string szDisplayName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
-            public string szTypeName;
-        }
-
-        private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
-        private const uint SHGFI_ICON = 0x000000100;
-        private const uint SHGFI_SMALLICON = 0x000000001;
-        private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
-
-        private static IntPtr GetClassLongPtr(IntPtr hWnd, int nIndex)
-        {
-            if (IntPtr.Size > 4)
-                return GetClassLongPtr64(hWnd, nIndex);
-            else
-                return GetClassLongPtr32(hWnd, nIndex);
-        }
-
-        private const int GWL_STYLE = -16;
-        private const int GWL_EXSTYLE = -20;
-        private const int GW_OWNER = 4;
-        private const uint GA_ROOTOWNER = 3;
-
-        private const uint WS_EX_TOOLWINDOW = 0x00000080;
-        private const uint WS_EX_APPWINDOW = 0x00040000;
-        
-        private const int SW_MAXIMIZE = 3;
-        private const int SW_MINIMIZE = 6;
-        private const int SW_RESTORE = 9;
-        private const uint WM_CLOSE = 0x0010;
-
-        private const uint WM_GETICON = 0x007F;
-        private const int ICON_SMALL = 0;
-        private const int ICON_BIG = 1;
-        private const int ICON_SMALL2 = 2;
-        private const int GCLP_HICON = -14;
-        private const int GCLP_HICONSM = -34;
+        private readonly Dictionary<IntPtr, ImageSource> _iconCache = new Dictionary<IntPtr, ImageSource>();
 
         public List<WindowItemViewModel> GetRunningWindows()
         {
             var windows = new List<WindowItemViewModel>();
             var currentProcessId = Process.GetCurrentProcess().Id;
             var allScreens = System.Windows.Forms.Screen.AllScreens;
-            var foregroundWindow = GetForegroundWindow();
+            var foregroundWindow = NativeMethods.GetForegroundWindow();
 
-            EnumWindows((hWnd, lParam) =>
+            // Clean up cache for closed windows
+            var currentHandles = new HashSet<IntPtr>();
+
+            NativeMethods.EnumWindows((hWnd, lParam) =>
             {
                 if (IsTaskbarWindow(hWnd))
                 {
-                    GetWindowThreadProcessId(hWnd, out uint processId);
+                    NativeMethods.GetWindowThreadProcessId(hWnd, out uint processId);
+
+                    currentHandles.Add(hWnd);
 
                     // Exclude our own app
                     if (processId == currentProcessId)
                         return true;
 
                     StringBuilder titleBuilder = new StringBuilder(256);
-                    if (GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity) > 0)
+                    if (NativeMethods.GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity) > 0)
                     {
                         var title = titleBuilder.ToString();
                         
@@ -167,7 +62,7 @@ namespace YomogiTaskBar.Managers
                                 Title = title,
                                 ProcessId = (int)processId,
                                 IconSource = GetWindowIcon(hWnd),
-                                IsMinimized = IsIconic(hWnd),
+                                IsMinimized = NativeMethods.IsIconic(hWnd),
                                 MonitorIndex = monitorIndex,
                                 IsActive = (hWnd == foregroundWindow)
                             });
@@ -176,6 +71,13 @@ namespace YomogiTaskBar.Managers
                 }
                 return true;
             }, IntPtr.Zero);
+
+            // Remove closed windows from cache
+            var keysToRemove = _iconCache.Keys.Where(k => !currentHandles.Contains(k)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _iconCache.Remove(key);
+            }
 
             var normalWindows = windows.Where(w => !w.IsMinimized)
                 .OrderBy(w => w.MonitorIndex)
@@ -201,32 +103,32 @@ namespace YomogiTaskBar.Managers
 
         public void ActivateWindow(IntPtr handle)
         {
-            if (IsIconic(handle))
+            if (NativeMethods.IsIconic(handle))
             {
-                ShowWindow(handle, SW_RESTORE);
+                NativeMethods.ShowWindow(handle, NativeMethods.SW_RESTORE);
             }
-            SetForegroundWindow(handle);
+            NativeMethods.SetForegroundWindow(handle);
         }
 
         public void CloseWindow(IntPtr handle)
         {
-            SendMessage(handle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            NativeMethods.SendMessage(handle, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
         }
 
         public void MinimizeWindow(IntPtr handle)
         {
-            ShowWindow(handle, SW_MINIMIZE);
+            NativeMethods.ShowWindow(handle, NativeMethods.SW_MINIMIZE);
         }
 
         public void ToggleMaximize(IntPtr handle)
         {
-            if (IsZoomed(handle))
+            if (NativeMethods.IsZoomed(handle))
             {
-                ShowWindow(handle, SW_RESTORE);
+                NativeMethods.ShowWindow(handle, NativeMethods.SW_RESTORE);
             }
             else
             {
-                ShowWindow(handle, SW_MAXIMIZE);
+                NativeMethods.ShowWindow(handle, NativeMethods.SW_MAXIMIZE);
             }
         }
 
@@ -247,14 +149,14 @@ namespace YomogiTaskBar.Managers
             var targetScreen = allScreens[targetIndex];
 
             // Restore if minimized or maximized for smooth transition
-            bool wasMinimized = IsIconic(handle);
-            bool wasMaximized = IsZoomed(handle);
+            bool wasMinimized = NativeMethods.IsIconic(handle);
+            bool wasMaximized = NativeMethods.IsZoomed(handle);
             if (wasMinimized || wasMaximized)
             {
-                ShowWindow(handle, SW_RESTORE);
+                NativeMethods.ShowWindow(handle, NativeMethods.SW_RESTORE);
             }
 
-            if (GetWindowRect(handle, out RECT rect))
+            if (NativeMethods.GetWindowRect(handle, out RECT rect))
             {
                 int width = rect.right - rect.left;
                 int height = rect.bottom - rect.top;
@@ -264,42 +166,22 @@ namespace YomogiTaskBar.Managers
                 int newY = targetScreen.Bounds.Top + (targetScreen.Bounds.Height - height) / 2;
 
                 // SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
-                SetWindowPos(handle, IntPtr.Zero, newX, newY, 0, 0, 0x0001 | 0x0004 | 0x0010);
+                NativeMethods.SetWindowPos(handle, IntPtr.Zero, newX, newY, 0, 0, 0x0001 | 0x0004 | 0x0010);
 
                 if (wasMaximized)
                 {
-                    ShowWindow(handle, SW_MAXIMIZE);
+                    NativeMethods.ShowWindow(handle, NativeMethods.SW_MAXIMIZE);
                 }
             }
         }
 
-        [DllImport("dwmapi.dll")]
-        private static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct RECT
-        {
-            public int left;
-            public int top;
-            public int right;
-            public int bottom;
-        }
-
-        private const int DWMWA_CLOAKED = 14;
-        private const uint WS_EX_TRANSPARENT = 0x00000020;
-        private const uint WS_EX_LAYERED = 0x00080000;
-
         private bool IsTaskbarWindow(IntPtr hWnd)
         {
-            if (!IsWindowVisible(hWnd))
+            if (!NativeMethods.IsWindowVisible(hWnd))
                 return false;
 
             int cloakedVal;
-            DwmGetWindowAttribute(hWnd, DWMWA_CLOAKED, out cloakedVal, sizeof(int));
+            NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out cloakedVal, sizeof(int));
             if (cloakedVal != 0)
                 return false;
 
@@ -308,53 +190,121 @@ namespace YomogiTaskBar.Managers
                 return false;
 
             // 1. サイズが異常（0x0のような見えないウィンドウ）を除外
-            if (GetWindowRect(hWnd, out RECT rect))
+            if (NativeMethods.GetWindowRect(hWnd, out RECT rect))
             {
                 if (rect.right - rect.left <= 0 || rect.bottom - rect.top <= 0)
                     return false;
             }
 
-            IntPtr rootOwner = GetAncestor(hWnd, GA_ROOTOWNER);
-            if (GetLastActivePopup(rootOwner) != hWnd)
+            IntPtr rootOwner = NativeMethods.GetAncestor(hWnd, NativeMethods.GA_ROOTOWNER);
+            if (NativeMethods.GetLastActivePopup(rootOwner) != hWnd)
                 return false;
 
-            int exStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
+            int exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EXSTYLE);
             
             // 2. マウスクリックを透過する設定のオーバーレイ表示（透明レイヤー）を除外
-            if ((exStyle & WS_EX_LAYERED) != 0 && (exStyle & WS_EX_TRANSPARENT) != 0)
+            if ((exStyle & NativeMethods.WS_EX_LAYERED) != 0 && (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0)
                 return false;
 
-            if ((exStyle & WS_EX_APPWINDOW) != 0)
+            if ((exStyle & NativeMethods.WS_EX_APPWINDOW) != 0)
                 return true;
 
-            if ((exStyle & WS_EX_TOOLWINDOW) != 0)
+            if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0)
                 return false;
 
-            IntPtr owner = GetWindow(hWnd, GW_OWNER);
+            IntPtr owner = NativeMethods.GetWindow(hWnd, NativeMethods.GW_OWNER);
             return owner == IntPtr.Zero;
         }
 
         private ImageSource? GetWindowIcon(IntPtr hWnd)
         {
-            IntPtr hIcon = SendMessage(hWnd, WM_GETICON, new IntPtr(ICON_SMALL2), IntPtr.Zero);
-            if (hIcon == IntPtr.Zero)
-                hIcon = SendMessage(hWnd, WM_GETICON, new IntPtr(ICON_SMALL), IntPtr.Zero);
-            if (hIcon == IntPtr.Zero)
-                hIcon = SendMessage(hWnd, WM_GETICON, new IntPtr(ICON_BIG), IntPtr.Zero);
-            if (hIcon == IntPtr.Zero)
-                hIcon = GetClassLongPtr(hWnd, GCLP_HICONSM);
-            if (hIcon == IntPtr.Zero)
-                hIcon = GetClassLongPtr(hWnd, GCLP_HICON);
+            if (_iconCache.TryGetValue(hWnd, out var cachedIcon))
+            {
+                return cachedIcon;
+            }
+
+            string? path = GetProcessPath(hWnd);
+            bool isUwp = path != null && path.Contains("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase);
+
+            ImageSource? hIconSrc = null;
+            IntPtr hIcon = IntPtr.Zero;
+            bool needsDestroy = false;
+
+            if (isUwp)
+            {
+                // Try Windows 10 SDK extraction first (most reliable for UWP)
+                if (!string.IsNullOrEmpty(path))
+                {
+                    hIconSrc = GetUwpIconNative(hWnd);
+                    if (hIconSrc != null)
+                    {
+                        // Cache it immediately and return
+                        _iconCache[hWnd] = hIconSrc;
+                        return hIconSrc;
+                    }
+                }
+
+                // Try to get icon from UWP child window (CoreWindow)
+                NativeMethods.EnumChildWindows(hWnd, (childHWnd, lParam) =>
+                {
+                    IntPtr childIcon = NativeMethods.SendMessage(childHWnd, NativeMethods.WM_GETICON, new IntPtr(NativeMethods.ICON_SMALL2), IntPtr.Zero);
+                    if (childIcon == IntPtr.Zero) childIcon = NativeMethods.SendMessage(childHWnd, NativeMethods.WM_GETICON, new IntPtr(NativeMethods.ICON_SMALL), IntPtr.Zero);
+                    if (childIcon == IntPtr.Zero) childIcon = NativeMethods.GetClassLongPtr(childHWnd, NativeMethods.GCLP_HICONSM);
+                    
+                    if (childIcon != IntPtr.Zero)
+                    {
+                        hIcon = childIcon;
+                        return false;
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                // For UWP, ExtractIconEx directly from the exe can work if it has embedded icons
+                if (hIcon == IntPtr.Zero && !string.IsNullOrEmpty(path))
+                {
+                    IntPtr hLarge = IntPtr.Zero;
+                    IntPtr hSmall = IntPtr.Zero;
+                    try
+                    {
+                        NativeMethods.ExtractIconEx(path, 0, out hLarge, out hSmall, 1);
+                        if (hSmall != IntPtr.Zero)
+                        {
+                            hIcon = hSmall;
+                            if (hLarge != IntPtr.Zero) NativeMethods.DestroyIcon(hLarge);
+                            needsDestroy = true;
+                        }
+                        else if (hLarge != IntPtr.Zero)
+                        {
+                            hIcon = hLarge;
+                            needsDestroy = true;
+                        }
+                    }
+                    catch { }
+                }
+            }
 
             if (hIcon == IntPtr.Zero)
             {
-                // Fallback: Get icon from process executable (useful for UWP apps like Settings)
-                string? path = GetProcessPath(hWnd);
+                hIcon = NativeMethods.SendMessage(hWnd, NativeMethods.WM_GETICON, new IntPtr(NativeMethods.ICON_SMALL2), IntPtr.Zero);
+                if (hIcon == IntPtr.Zero)
+                    hIcon = NativeMethods.SendMessage(hWnd, NativeMethods.WM_GETICON, new IntPtr(NativeMethods.ICON_SMALL), IntPtr.Zero);
+                if (hIcon == IntPtr.Zero)
+                    hIcon = NativeMethods.SendMessage(hWnd, NativeMethods.WM_GETICON, new IntPtr(NativeMethods.ICON_BIG), IntPtr.Zero);
+                if (hIcon == IntPtr.Zero)
+                    hIcon = NativeMethods.GetClassLongPtr(hWnd, NativeMethods.GCLP_HICONSM);
+                if (hIcon == IntPtr.Zero)
+                    hIcon = NativeMethods.GetClassLongPtr(hWnd, NativeMethods.GCLP_HICON);
+            }
+
+            if (hIcon == IntPtr.Zero)
+            {
+                // Fallback: Get icon from process executable
                 if (!string.IsNullOrEmpty(path))
                 {
                     SHFILEINFO shinfo = new SHFILEINFO();
-                    SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_ICON | SHGFI_SMALLICON);
+                    NativeMethods.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), NativeMethods.SHGFI_ICON | NativeMethods.SHGFI_SMALLICON);
                     hIcon = shinfo.hIcon;
+                    needsDestroy = true; // We created this icon via SHGetFileInfo, so we must destroy it
                 }
             }
 
@@ -368,31 +318,116 @@ namespace YomogiTaskBar.Managers
                         BitmapSizeOptions.FromEmptyOptions());
                     
                     bitmapSource.Freeze();
+                    
+                    // Only cache if the window is NOT minimized, 
+                    // because minimized UWP apps often return generic icons.
+                    if (!NativeMethods.IsIconic(hWnd))
+                    {
+                        _iconCache[hWnd] = bitmapSource;
+                    }
+
                     return bitmapSource;
                 }
                 catch
                 {
                     // Ignore errors fetching custom/UWP icons
                 }
+                finally
+                {
+                    if (needsDestroy)
+                    {
+                        NativeMethods.DestroyIcon(hIcon);
+                    }
+                }
             }
 
+            return null;
+        }
+
+        private ImageSource? GetUwpIconNative(IntPtr hWnd)
+        {
+            try
+            {
+                uint pid;
+                NativeMethods.GetWindowThreadProcessId(hWnd, out pid);
+
+                // Get real pid for UWP apps
+                uint realPid = 0;
+                NativeMethods.EnumChildWindows(hWnd, (childHWnd, lParam) =>
+                {
+                    uint childPid;
+                    NativeMethods.GetWindowThreadProcessId(childHWnd, out childPid);
+                    if (childPid != pid)
+                    {
+                        realPid = childPid;
+                        return false;
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                uint targetPid = realPid != 0 ? realPid : pid;
+
+                IntPtr hProcess = NativeMethods.OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */, false, targetPid);
+                if (hProcess != IntPtr.Zero)
+                {
+                    try
+                    {
+                        uint len = 0;
+                        NativeMethods.GetPackageFullName(hProcess, ref len, null);
+                        if (len > 0)
+                        {
+                            var sb = new StringBuilder((int)len);
+                            if (NativeMethods.GetPackageFullName(hProcess, ref len, sb) == 0) // ERROR_SUCCESS
+                            {
+                                string pkgName = sb.ToString();
+                                var pm = new Windows.Management.Deployment.PackageManager();
+                                var pkg = pm.FindPackageForUser(string.Empty, pkgName);
+                                
+                                if (pkg != null)
+                                {
+                                    // Use the exact logo provided by the OS
+                                    Uri logoUri = pkg.Logo;
+                                    if (logoUri != null)
+                                    {
+                                        var bitmap = new BitmapImage();
+                                        bitmap.BeginInit();
+                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        bitmap.UriSource = logoUri;
+                                        bitmap.EndInit();
+                                        bitmap.Freeze();
+                                        return bitmap;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        NativeMethods.CloseHandle(hProcess);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors
+            }
             return null;
         }
 
         private string? GetProcessPath(IntPtr hWnd)
         {
             uint pid;
-            GetWindowThreadProcessId(hWnd, out pid);
+            NativeMethods.GetWindowThreadProcessId(hWnd, out pid);
 
             // Handle ApplicationFrameHost (UWP Apps)
             string? path = GetPathFromPid(pid);
             if (path != null && path.EndsWith("ApplicationFrameHost.exe", StringComparison.OrdinalIgnoreCase))
             {
                 uint realPid = 0;
-                EnumChildWindows(hWnd, (childHWnd, lParam) =>
+                NativeMethods.EnumChildWindows(hWnd, (childHWnd, lParam) =>
                 {
                     uint childPid;
-                    GetWindowThreadProcessId(childHWnd, out childPid);
+                    NativeMethods.GetWindowThreadProcessId(childHWnd, out childPid);
                     if (childPid != pid)
                     {
                         realPid = childPid;
@@ -412,21 +447,21 @@ namespace YomogiTaskBar.Managers
 
         private string? GetPathFromPid(uint pid)
         {
-            IntPtr hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
             if (hProcess != IntPtr.Zero)
             {
                 try
                 {
                     StringBuilder sb = new StringBuilder(1024);
                     int size = sb.Capacity;
-                    if (QueryFullProcessImageName(hProcess, 0, sb, ref size))
+                    if (NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref size))
                     {
                         return sb.ToString();
                     }
                 }
                 finally
                 {
-                    CloseHandle(hProcess);
+                    NativeMethods.CloseHandle(hProcess);
                 }
             }
             return null;

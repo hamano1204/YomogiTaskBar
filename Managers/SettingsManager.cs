@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using YomogiTaskBar.Models;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar.Managers
 {
@@ -23,7 +24,10 @@ namespace YomogiTaskBar.Managers
                     return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError("設定ファイルの読み込みに失敗しました。デフォルト設定を使用します。", ex, "SettingsManager");
+            }
             return new AppSettings();
         }
 
@@ -40,7 +44,10 @@ namespace YomogiTaskBar.Managers
                 string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(SettingsPath, json);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError("設定ファイルの保存に失敗しました。", ex, "SettingsManager");
+            }
         }
     }
 }

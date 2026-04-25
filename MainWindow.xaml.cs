@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
@@ -29,6 +29,7 @@ namespace YomogiTaskBar
         private Forms.NotifyIcon? _notifyIcon;
         private IntPtr _windowHandle;
         private AppSettings _settings;
+        private DispatcherTimer? _autoHideTimer;
 
         public MainWindow()
         {
@@ -41,23 +42,11 @@ namespace YomogiTaskBar
             WindowsList.ItemsSource = _windows;
         }
 
-        [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-        [DllImport("dwmapi.dll")]
-        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
-
-        private const int GWL_EXSTYLE = -20;
-        private const int WS_EX_TOOLWINDOW = 0x00000080;
-        private const int DWMWA_EXCLUDED_FROM_PEEK = 12;
-
         private void Window_SourceInitialized(object sender, EventArgs e)
         {
             _windowHandle = new WindowInteropHelper(this).Handle;
             
             // Force pinned mode on startup for stability
-            _isPinned = true;
             PinButton.Content = "📌";
         }
 
@@ -68,16 +57,22 @@ namespace YomogiTaskBar
                 Logger.LogOperationStart("Window initialization", "MainWindow");
 
                 // Hide from Task View and Alt+Tab
-                int exStyle = GetWindowLong(_windowHandle, GWL_EXSTYLE);
-                SetWindowLong(_windowHandle, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW);
+                int exStyle = NativeMethods.GetWindowLong(_windowHandle, NativeMethods.GWL_EXSTYLE);
+                NativeMethods.SetWindowLong(_windowHandle, NativeMethods.GWL_EXSTYLE, exStyle | (int)NativeMethods.WS_EX_TOOLWINDOW);
                 
                 int True = 1;
-                DwmSetWindowAttribute(_windowHandle, DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
+                NativeMethods.DwmSetWindowAttribute(_windowHandle, NativeMethods.DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
 
                 // Initialize controllers
                 _stateManager = new WindowStateManager(this, _windowHandle, _settings);
                 _appBarController = new AppBarController(this, _windowHandle);
                 _appBarController.Initialize();
+
+                _appBarController.PinModeChanged += (s, isPinned) => 
+                {
+                    PinButton.Content = isPinned ? "📌" : "📍";
+                    ApplyMode();
+                };
 
                 // Restore window settings
                 var restoredSettings = _stateManager.RestoreWindowSettings();
@@ -87,9 +82,6 @@ namespace YomogiTaskBar
                 
                 // Update UI for restored edge
                 UpdateUIForEdge(restoredSettings.Edge);
-
-                // Pin to all virtual desktops
-                VirtualDesktopHelper.PinWindowToAllDesktops(_windowHandle);
 
                 RefreshWindowList();
 
@@ -203,38 +195,72 @@ namespace YomogiTaskBar
 
         private void RefreshWindowList()
         {
-            // Capture current selection handle
-            IntPtr selectedHandle = IntPtr.Zero;
-            if (WindowsList.SelectedItem is WindowItemViewModel selected)
-            {
-                selectedHandle = selected.Handle;
-            }
-
             var windows = _windowManager.GetRunningWindows();
             
-            _windows.Clear();
-            foreach (var w in windows)
+            var existingHandles = _windows.Select(w => w.Handle).ToHashSet();
+            var newHandles = windows.Select(w => w.Handle).ToHashSet();
+
+            // Remove closed windows
+            for (int i = _windows.Count - 1; i >= 0; i--)
             {
-                _windows.Add(w);
+                if (!_windows[i].IsSeparator && !newHandles.Contains(_windows[i].Handle))
+                {
+                    _windows.RemoveAt(i);
+                }
             }
 
-            // Restore selection if the window is still present
-            if (selectedHandle != IntPtr.Zero)
-            {
-                var target = _windows.FirstOrDefault(w => w.Handle == selectedHandle);
-                if (target != null)
-                {
-                    WindowsList.SelectedItem = target;
+            var currentSeparator = _windows.FirstOrDefault(w => w.IsSeparator);
+            var newSeparator = windows.FirstOrDefault(w => w.IsSeparator);
 
-                    // If the user is currently navigating with the keyboard, 
-                    // we must restore focus to the item container to keep the navigation anchor.
-                    if (this.IsActive && WindowsList.IsKeyboardFocusWithin)
+            // Update or Insert
+            for (int i = 0; i < windows.Count; i++)
+            {
+                var newWin = windows[i];
+
+                if (newWin.IsSeparator)
+                {
+                    if (currentSeparator == null)
                     {
-                        WindowsList.UpdateLayout();
-                        var container = WindowsList.ItemContainerGenerator.ContainerFromItem(target) as ListBoxItem;
-                        container?.Focus();
+                        _windows.Insert(i, newWin);
+                        currentSeparator = newWin;
+                    }
+                    else
+                    {
+                        int currentIndex = _windows.IndexOf(currentSeparator);
+                        if (currentIndex != i)
+                        {
+                            _windows.Move(currentIndex, i);
+                        }
+                    }
+                    continue;
+                }
+
+                var existingWin = _windows.FirstOrDefault(w => w.Handle == newWin.Handle);
+                if (existingWin == null)
+                {
+                    _windows.Insert(i, newWin);
+                }
+                else
+                {
+                    // Update properties if changed
+                    if (existingWin.Title != newWin.Title) existingWin.Title = newWin.Title;
+                    if (existingWin.IsMinimized != newWin.IsMinimized) existingWin.IsMinimized = newWin.IsMinimized;
+                    if (existingWin.IsActive != newWin.IsActive) existingWin.IsActive = newWin.IsActive;
+                    if (existingWin.MonitorIndex != newWin.MonitorIndex) existingWin.MonitorIndex = newWin.MonitorIndex;
+                    if (existingWin.IconSource != newWin.IconSource) existingWin.IconSource = newWin.IconSource;
+
+                    int currentIndex = _windows.IndexOf(existingWin);
+                    if (currentIndex != i)
+                    {
+                        _windows.Move(currentIndex, i);
                     }
                 }
+            }
+            
+            // Remove separator if no longer needed
+            if (newSeparator == null && currentSeparator != null)
+            {
+                _windows.Remove(currentSeparator);
             }
 
             // Update current desktop name
@@ -264,32 +290,41 @@ namespace YomogiTaskBar
 
         private void OnHotkeyTriggered()
         {
-            IntPtr prevWindow = WindowManager.GetForegroundWindow();
+            IntPtr prevWindow = NativeMethods.GetForegroundWindow();
 
             // Reveal if hidden by Edge Trigger
-            if (_isHidden) ShowWindow();
+            if (_appBarController?.IsHidden == true) _appBarController.ShowWindow();
 
             this.Activate();
             RefreshWindowList();
 
-            // Select the previously active window in the list
-            var target = _windows.FirstOrDefault(w => w.Handle == prevWindow);
-            if (target != null)
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                WindowsList.SelectedItem = target;
-                WindowsList.ScrollIntoView(target);
-            }
-            else if (_windows.Count > 0)
-            {
-                // Select the first non-separator item
-                var first = _windows.FirstOrDefault(w => !w.IsSeparator);
-                if (first != null)
+                // Select the previously active window in the list
+                var target = _windows.FirstOrDefault(w => w.Handle == prevWindow || w.Handle == NativeMethods.GetAncestor(prevWindow, NativeMethods.GA_ROOTOWNER));
+                
+                if (target == null && _windows.Count > 0)
                 {
-                    WindowsList.SelectedItem = first;
+                    // Select the first non-separator item
+                    target = _windows.FirstOrDefault(w => !w.IsSeparator);
                 }
-            }
 
-            WindowsList.Focus();
+                if (target != null)
+                {
+                    WindowsList.SelectedItem = target;
+                    WindowsList.ScrollIntoView(target);
+                    
+                    var item = (ListBoxItem)WindowsList.ItemContainerGenerator.ContainerFromItem(target);
+                    if (item != null)
+                    {
+                        item.Focus();
+                    }
+                }
+                else
+                {
+                    WindowsList.Focus();
+                }
+            }), DispatcherPriority.Loaded);
         }
 
         private void ActivateSelectedItem()
@@ -297,12 +332,7 @@ namespace YomogiTaskBar
             if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
             {
                 _windowManager.ActivateWindow(selected.Handle);
-                // We don't necessarily need to clear selection here if we want to keep focus
-                // but the existing behavior was to clear it.
-                // However, for keyboard nav, keeping it might be better.
-                // For now, let's clear it to match mouse behavior if preferred,
-                // but usually sidebar switchers close or lose focus.
-                if (!_isPinned) HideWindow();
+                if (_appBarController?.IsPinned == false) _appBarController.HideWindow();
             }
         }
 
@@ -481,44 +511,51 @@ namespace YomogiTaskBar
             }
         }
 
-        private bool _isPinned = true;
-        private DispatcherTimer? _autoHideTimer;
-        private bool _isHidden = false;
+        private void MinimizeRestoreItemButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.DataContext is WindowItemViewModel windowItem)
+            {
+                if (windowItem.IsMinimized)
+                {
+                    // 最小化されている → 通常画面に復元してアクティブ化
+                    _windowManager.ActivateWindow(windowItem.Handle);
+                }
+                else
+                {
+                    // 通常・最大化状態 → 最小化
+                    _windowManager.MinimizeWindow(windowItem.Handle);
+                }
+            }
+        }
 
         private void PinButton_Click(object sender, RoutedEventArgs e)
         {
-            _isPinned = !_isPinned;
-            PinButton.Content = _isPinned ? "📌" : "📍";
             _appBarController?.TogglePinMode();
-            ApplyMode();
         }
 
         private void ApplyMode()
         {
-            if (_isPinned)
+            if (_appBarController?.IsPinned == true)
             {
                 if (_autoHideTimer != null) _autoHideTimer.Stop();
-                _isHidden = false;
-                _appBarController?.RegisterAppBar((int)this.Width);
                 this.Topmost = false;
             }
             else
             {
-                _appBarController?.UnregisterAppBar();
                 this.Topmost = true;
                 
                 if (_autoHideTimer == null)
                 {
                     _autoHideTimer = new DispatcherTimer();
                     _autoHideTimer.Interval = TimeSpan.FromMilliseconds(500);
-                    _autoHideTimer.Tick += (s, e) => HideWindow();
+                    _autoHideTimer.Tick += (s, e) => _appBarController?.HideWindow();
                 }
             }
         }
 
         private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (!_isPinned)
+            if (_appBarController?.IsPinned == false)
             {
                 _autoHideTimer?.Stop();
                 _appBarController?.ShowWindow();
@@ -527,63 +564,10 @@ namespace YomogiTaskBar
 
         private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (!_isPinned && !_isHidden)
+            if (_appBarController?.IsPinned == false && _appBarController?.IsHidden == false)
             {
                 _autoHideTimer?.Start();
             }
-        }
-
-        private void ShowWindow()
-        {
-            if (!_isHidden) return;
-            _isHidden = false;
-            
-            var screen = Forms.Screen.FromHandle(_windowHandle);
-            var bounds = screen.Bounds;
-            var source = PresentationSource.FromVisual(this);
-            double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
-            double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
-
-            double left, top = bounds.Top / dpiY;
-            if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_LEFT)
-            {
-                left = bounds.Left / dpiX;
-            }
-            else
-            {
-                left = (bounds.Right / dpiX) - this.Width;
-            }
-
-            this.Left = left;
-            this.Top = top;
-        }
-
-        private void HideWindow()
-        {
-            if (_isPinned || _isHidden) return;
-            _autoHideTimer?.Stop();
-            _isHidden = true;
-
-            var screen = Forms.Screen.FromHandle(_windowHandle);
-            var bounds = screen.Bounds;
-            var source = PresentationSource.FromVisual(this);
-            double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
-            double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
-
-            double left, top = bounds.Top / dpiY;
-            const double visibleStrip = 2.0; // logical units
-
-            if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_LEFT)
-            {
-                left = (bounds.Left / dpiX) - this.Width + visibleStrip;
-            }
-            else
-            {
-                left = (bounds.Right / dpiX) - visibleStrip;
-            }
-
-            this.Left = left;
-            this.Top = top;
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -596,75 +580,8 @@ namespace YomogiTaskBar
                 this.DragMove();
                 
                 // Re-docking logic will re-register the AppBar if pinned
-                DetectEdgeAndDock();
-            }
-        }
-
-        private void DetectEdgeAndDock()
-        {
-            var mousePos = Forms.Control.MousePosition;
-            var screen = Forms.Screen.FromPoint(mousePos);
-            var bounds = screen.Bounds;
-
-            double threshold = bounds.Width * 0.1;
-
-            if (mousePos.X < bounds.Left + threshold)
-            {
-                DockTo(AppBarManager.ABEdge.ABE_LEFT, force: true, targetBounds: bounds);
-            }
-            else if (mousePos.X > bounds.Right - threshold)
-            {
-                DockTo(AppBarManager.ABEdge.ABE_RIGHT, force: true, targetBounds: bounds);
-            }
-            else
-            {
-                DockTo(_appBarController?.CurrentEdge ?? AppBarManager.ABEdge.ABE_RIGHT, force: true, targetBounds: bounds);
-            }
-        }
-
-        private void DockTo(AppBarManager.ABEdge edge, bool force = false, System.Drawing.Rectangle? targetBounds = null)
-        {
-            if (_isPinned)
-            {
-                _appBarController?.RegisterAppBar((int)this.Width, edge);
-            }
-
-            _appBarController?.DockToEdge(edge, targetBounds);
-            
-            if (!_isPinned)
-            {
-                // Manually position if not pinned
-                var bounds = targetBounds ?? Forms.Screen.FromHandle(_windowHandle).Bounds;
-                var source = PresentationSource.FromVisual(this);
-                double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
-                double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
-
-                this.Top = bounds.Top / dpiY;
-                this.Height = bounds.Height / dpiY;
-                if (edge == AppBarManager.ABEdge.ABE_LEFT)
-                {
-                    this.Left = bounds.Left / dpiX;
-                }
-                else
-                {
-                    this.Left = (bounds.Right / dpiX) - this.Width;
-                }
-            }
-
-            // Adjust UI for the new edge
-            if (edge == AppBarManager.ABEdge.ABE_LEFT)
-            {
-                ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
-                WindowsList.Margin = new Thickness(0, 0, 6, 0);
-                HeaderBorder.Padding = new Thickness(10, 10, 16, 10);
-                FooterBorder.Padding = new Thickness(10, 10, 16, 10);
-            }
-            else
-            {
-                ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                WindowsList.Margin = new Thickness(6, 0, 0, 0);
-                HeaderBorder.Padding = new Thickness(16, 10, 10, 10);
-                FooterBorder.Padding = new Thickness(16, 10, 10, 10);
+                _appBarController?.DetectEdgeAndDock();
+                UpdateUIForEdge(_appBarController?.CurrentEdge ?? AppBarManager.ABEdge.ABE_RIGHT);
             }
         }
 
@@ -677,8 +594,6 @@ namespace YomogiTaskBar
 
         private void Thumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
         {
-            // For right edge: dragging left (negative delta) increases width
-            // For left edge: dragging right (positive delta) increases width
             if (_appBarController?.CurrentEdge == AppBarManager.ABEdge.ABE_RIGHT)
             {
                 _tempWidth -= e.HorizontalChange;
@@ -703,96 +618,5 @@ namespace YomogiTaskBar
             }
         }
 
-        private void SaveWindowSettings()
-        {
-            try
-            {
-                // Save current window settings
-                _settings.WindowSettings.IsAppBarMode = _isPinned;
-                _settings.WindowSettings.Edge = _appBarController?.CurrentEdge ?? AppBarManager.ABEdge.ABE_RIGHT;
-                _settings.WindowSettings.WindowWidth = this.Width;
-                
-                // Get current monitor information
-                var currentScreen = Forms.Screen.FromHandle(_windowHandle);
-                var screens = Forms.Screen.AllScreens;
-                _settings.WindowSettings.MonitorIndex = Array.IndexOf(screens, currentScreen);
-                _settings.WindowSettings.LastMonitorCount = screens.Length;
-                
-                // Save settings
-                SettingsManager.Save(_settings);
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't prevent app from closing
-                System.Diagnostics.Debug.WriteLine($"Failed to save window settings: {ex.Message}");
-            }
-        }
-
-        private void RestoreWindowSettings()
-        {
-            try
-            {
-                var screens = Forms.Screen.AllScreens;
-                
-                // Check if monitor count has changed - if so, reset to first monitor
-                if (_settings.WindowSettings.LastMonitorCount != screens.Length)
-                {
-                    _settings.WindowSettings.MonitorIndex = 0;
-                    _settings.WindowSettings.LastMonitorCount = screens.Length;
-                }
-                
-                // Validate monitor index
-                if (_settings.WindowSettings.MonitorIndex < 0 || _settings.WindowSettings.MonitorIndex >= screens.Length)
-                {
-                    _settings.WindowSettings.MonitorIndex = 0;
-                }
-                
-                // Set window width first
-                if (_settings.WindowSettings.WindowWidth >= 100 && _settings.WindowSettings.WindowWidth <= 800)
-                {
-                    this.Width = _settings.WindowSettings.WindowWidth;
-                }
-                
-                // Set pinned mode (but don't apply yet - we'll apply after AppBar is set up)
-                _isPinned = _settings.WindowSettings.IsAppBarMode;
-                PinButton.Content = _isPinned ? "📌" : "📍";
-                
-                // Move to specified monitor and position based on edge
-                if (_settings.WindowSettings.MonitorIndex >= 0 && _settings.WindowSettings.MonitorIndex < screens.Length)
-                {
-                    var targetScreen = screens[_settings.WindowSettings.MonitorIndex];
-                    
-                    // Calculate position based on edge
-                    var source = PresentationSource.FromVisual(this);
-                    double dpiX = source?.CompositionTarget.TransformToDevice.M11 ?? 1.0;
-                    double dpiY = source?.CompositionTarget.TransformToDevice.M22 ?? 1.0;
-                    
-                    this.Top = targetScreen.Bounds.Top / dpiY;
-                    this.Height = targetScreen.Bounds.Height / dpiY;
-                    
-                    // Position window according to saved edge
-                    if (_settings.WindowSettings.Edge == AppBarManager.ABEdge.ABE_LEFT)
-                    {
-                        this.Left = targetScreen.Bounds.Left / dpiX;
-                    }
-                    else
-                    {
-                        this.Left = (targetScreen.Bounds.Right / dpiX) - this.Width;
-                    }
-                }
-                
-                // Note: ApplyMode() will be called after AppBar is set up in Window_Loaded
-            }
-            catch (Exception ex)
-            {
-                // Log error but use defaults
-                System.Diagnostics.Debug.WriteLine($"Failed to restore window settings: {ex.Message}");
-                
-                // Use default settings
-                _isPinned = true;
-                PinButton.Content = "📌";
-                // Don't call ApplyMode() here - let Window_Loaded handle it
-            }
-        }
     }
 }

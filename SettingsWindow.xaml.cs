@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,12 +9,30 @@ using YomogiTaskBar.Managers;
 
 namespace YomogiTaskBar
 {
-    public partial class SettingsWindow : Window
+    public partial class SettingsWindow : Window, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
         public AppSettings CurrentSettings { get; private set; }
         private System.Windows.Controls.Button? _activeButton;
         private bool _isInitializing = false;
-        public bool IsRecording { get; private set; } = false;
+
+        private bool _isRecording = false;
+        public bool IsRecording
+        {
+            get => _isRecording;
+            private set
+            {
+                if (_isRecording != value)
+                {
+                    _isRecording = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         public SettingsWindow(AppSettings settings)
         {
@@ -66,7 +86,7 @@ namespace YomogiTaskBar
 
             _activeButton = (System.Windows.Controls.Button)sender;
             _activeButton.Content = "キー入力を待機中...";
-            IsRecording = true;
+            IsRecording = true;  // INotifyPropertyChanged 経由でXAMLに通知される
             
             this.PreviewKeyDown += Window_PreviewKeyDown;
         }
@@ -89,7 +109,7 @@ namespace YomogiTaskBar
             
             _activeButton.Content = config?.ToString() ?? "未設定";
             _activeButton = null;
-            IsRecording = false;
+            IsRecording = false;  // INotifyPropertyChanged 経由でXAMLに通知される
             
             this.PreviewKeyDown -= Window_PreviewKeyDown;
         }

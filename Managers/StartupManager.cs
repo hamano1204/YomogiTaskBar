@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System;
 using System.Reflection;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar.Managers
 {
@@ -16,8 +17,9 @@ namespace YomogiTaskBar.Managers
                 using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, false);
                 return key?.GetValue(AppName) != null;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.LogError("スタートアップ登録状態の確認に失敗しました。", ex, "StartupManager");
                 return false;
             }
         }
@@ -31,8 +33,12 @@ namespace YomogiTaskBar.Managers
 
                 using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
                 key?.SetValue(AppName, $"\"{exePath}\"");
+                Logger.LogInfo("スタートアップ登録を有効にしました。", "StartupManager");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError("スタートアップ登録の有効化に失敗しました。", ex, "StartupManager");
+            }
         }
 
         public static void Disable()
@@ -41,9 +47,15 @@ namespace YomogiTaskBar.Managers
             {
                 using var key = Registry.CurrentUser.OpenSubKey(RegistryPath, true);
                 if (key?.GetValue(AppName) != null)
+                {
                     key.DeleteValue(AppName);
+                    Logger.LogInfo("スタートアップ登録を無効にしました。", "StartupManager");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError("スタートアップ登録の無効化に失敗しました。", ex, "StartupManager");
+            }
         }
 
         public static void Apply(bool enabled)

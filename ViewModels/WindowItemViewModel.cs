@@ -1,17 +1,74 @@
-﻿using System;
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
 namespace YomogiTaskBar.ViewModels
 {
-    public class WindowItemViewModel
+    public class WindowItemViewModel : INotifyPropertyChanged
     {
-        public IntPtr Handle { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public int ProcessId { get; set; }
-        public ImageSource? IconSource { get; set; }
-        public bool IsMinimized { get; set; }
-        public bool IsSeparator { get; set; }
-        public int MonitorIndex { get; set; }
-        public bool IsActive { get; set; }
+        private IntPtr _handle;
+        private string _title = string.Empty;
+        private int _processId;
+        private ImageSource? _iconSource;
+        private bool _isMinimized;
+        private bool _isSeparator;
+        private int _monitorIndex;
+        private bool _isActive;
+
+        public IntPtr Handle
+        {
+            get => _handle;
+            set { if (_handle != value) { _handle = value; OnPropertyChanged(); } }
+        }
+
+        public string Title
+        {
+            get => _title;
+            set { if (_title != value) { _title = value; OnPropertyChanged(); } }
+        }
+
+        public int ProcessId
+        {
+            get => _processId;
+            set { if (_processId != value) { _processId = value; OnPropertyChanged(); } }
+        }
+
+        public ImageSource? IconSource
+        {
+            get => _iconSource;
+            set { if (_iconSource != value) { _iconSource = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsMinimized
+        {
+            get => _isMinimized;
+            set { if (_isMinimized != value) { _isMinimized = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsSeparator
+        {
+            get => _isSeparator;
+            set { if (_isSeparator != value) { _isSeparator = value; OnPropertyChanged(); } }
+        }
+
+        public int MonitorIndex
+        {
+            get => _monitorIndex;
+            set { if (_monitorIndex != value) { _monitorIndex = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsActive
+        {
+            get => _isActive;
+            set { if (_isActive != value) { _isActive = value; OnPropertyChanged(); } }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

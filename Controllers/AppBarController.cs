@@ -13,13 +13,16 @@ namespace YomogiTaskBar.Controllers
     /// <summary>
     /// Manages AppBar functionality and edge detection
     /// </summary>
-    public class AppBarController
+    public class AppBarController : IDisposable
     {
         private readonly Window _window;
         private readonly IntPtr _windowHandle;
         private AppBarManager? _appBarManager;
         private bool _isPinned = true;
         private bool _isHidden = false;
+
+        public event EventHandler<bool>? PinModeChanged;
+        public event EventHandler<bool>? HiddenStateChanged;
 
         public AppBarManager.ABEdge CurrentEdge => _appBarManager?.Edge ?? AppBarManager.ABEdge.ABE_RIGHT;
         public bool IsPinned => _isPinned;
@@ -96,11 +99,16 @@ namespace YomogiTaskBar.Controllers
             try
             {
                 _isPinned = !_isPinned;
+                PinModeChanged?.Invoke(this, _isPinned);
                 Logger.LogInfo($"Pin mode toggled to: {_isPinned}", "AppBar");
                 
                 if (_isPinned)
                 {
-                    _isHidden = false;
+                    if (_isHidden)
+                    {
+                        _isHidden = false;
+                        HiddenStateChanged?.Invoke(this, false);
+                    }
                     RegisterAppBar((int)_window.Width, CurrentEdge);
                     _window.Topmost = false;
                 }
@@ -126,6 +134,7 @@ namespace YomogiTaskBar.Controllers
             try
             {
                 _isHidden = false;
+                HiddenStateChanged?.Invoke(this, false);
                 var screen = Forms.Screen.FromHandle(_windowHandle);
                 var bounds = screen.Bounds;
                 
@@ -159,6 +168,7 @@ namespace YomogiTaskBar.Controllers
             try
             {
                 _isHidden = true;
+                HiddenStateChanged?.Invoke(this, true);
                 var screen = Forms.Screen.FromHandle(_windowHandle);
                 var bounds = screen.Bounds;
                 
@@ -194,11 +204,14 @@ namespace YomogiTaskBar.Controllers
                     _appBarManager?.Register((int)_window.Width, edge);
                 }
 
-                _appBarManager.Edge = edge;
-                
-                if (_isPinned)
+                if (_appBarManager != null)
                 {
-                    _appBarManager.SizeAppBar(targetBounds);
+                    _appBarManager.Edge = edge;
+                    
+                    if (_isPinned)
+                    {
+                        _appBarManager.SizeAppBar(targetBounds);
+                    }
                 }
                 else
                 {

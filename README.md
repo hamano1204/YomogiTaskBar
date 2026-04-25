@@ -49,7 +49,7 @@ I created it with the purpose of being able to quickly call up and exit applicat
 ## Requirements / 要件
 
 - Windows
-- .NET 10.0 SDK
+- .NET 9.0 SDK
 
 
 ## Build and Run / ビルドと実行

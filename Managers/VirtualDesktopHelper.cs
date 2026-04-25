@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar.Managers
 {
@@ -97,26 +98,15 @@ namespace YomogiTaskBar.Managers
             return desktops.FirstOrDefault(d => d.IsCurrent)?.Name ?? "Desktop 1";
         }
 
-        [DllImport("user32.dll")]
-        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
-
-        const uint KEYEVENTF_KEYUP = 0x0002;
-        const byte VK_LWIN = 0x5B;
-        const byte VK_CONTROL = 0x11;
-        const byte VK_LEFT = 0x25;
-        const byte VK_RIGHT = 0x27;
-        const byte VK_D = 0x44;
-        const byte VK_F4 = 0x73;
-
         private static void SendKeyCombo(byte directionKey)
         {
-            keybd_event(VK_LWIN, 0, 0, 0);
-            keybd_event(VK_CONTROL, 0, 0, 0);
-            keybd_event(directionKey, 0, 0, 0);
+            NativeMethods.keybd_event(NativeMethods.VK_LWIN, 0, 0, 0);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, 0, 0);
+            NativeMethods.keybd_event(directionKey, 0, 0, 0);
             
-            keybd_event(directionKey, 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+            NativeMethods.keybd_event(directionKey, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
+            NativeMethods.keybd_event(NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
+            NativeMethods.keybd_event(NativeMethods.VK_LWIN, 0, NativeMethods.KEYEVENTF_KEYUP, 0);
         }
 
         public static async Task SwitchToDesktop(Guid id)
@@ -128,7 +118,7 @@ namespace YomogiTaskBar.Managers
             if (currentIndex == -1 || targetIndex == -1 || currentIndex == targetIndex) return;
 
             int diff = targetIndex - currentIndex;
-            byte key = diff > 0 ? VK_RIGHT : VK_LEFT;
+            byte key = diff > 0 ? NativeMethods.VK_RIGHT : NativeMethods.VK_LEFT;
             int count = Math.Abs(diff);
 
             for (int i = 0; i < count; i++)
@@ -140,12 +130,12 @@ namespace YomogiTaskBar.Managers
 
         public static void CreateNewDesktop()
         {
-            SendKeyCombo(VK_D);
+            SendKeyCombo(NativeMethods.VK_D);
         }
 
         public static void RemoveCurrentDesktop()
         {
-            SendKeyCombo(VK_F4);
+            SendKeyCombo(NativeMethods.VK_F4);
         }
 
         public static bool IsWindowOnCurrentDesktop(IntPtr hWnd)
@@ -159,11 +149,6 @@ namespace YomogiTaskBar.Managers
             catch { return true; }
         }
 
-        public static void PinWindowToAllDesktops(IntPtr hWnd) { }
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
         public static void MoveToCurrentDesktop(IntPtr hWnd)
         {
             if (hWnd == IntPtr.Zero || _manager == null) return;
@@ -171,7 +156,7 @@ namespace YomogiTaskBar.Managers
             {
                 if (!IsWindowOnCurrentDesktop(hWnd))
                 {
-                    IntPtr fg = GetForegroundWindow();
+                    IntPtr fg = NativeMethods.GetForegroundWindow();
                     if (fg != IntPtr.Zero && _manager.GetWindowDesktopId(fg, out Guid currentId) == 0)
                     {
                         _manager.MoveWindowToDesktop(hWnd, ref currentId);
