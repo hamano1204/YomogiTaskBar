@@ -12,6 +12,7 @@ namespace YomogiTaskBar
         public AppSettings CurrentSettings { get; private set; }
         private System.Windows.Controls.Button? _activeButton;
         private bool _isInitializing = false;
+        public bool IsRecording { get; private set; } = false;
 
         public SettingsWindow(AppSettings settings)
         {
@@ -65,10 +66,7 @@ namespace YomogiTaskBar
 
             _activeButton = (System.Windows.Controls.Button)sender;
             _activeButton.Content = "キー入力を待機中...";
-            
-            // Highlight the button during recording - use explicit colors for guaranteed contrast
-            _activeButton.Background = System.Windows.Media.Brushes.Orange;
-            _activeButton.Foreground = System.Windows.Media.Brushes.Black;
+            IsRecording = true;
             
             this.PreviewKeyDown += Window_PreviewKeyDown;
         }
@@ -88,15 +86,12 @@ namespace YomogiTaskBar
                 "PrevMonitor" => CurrentSettings.PrevMonitor,
                 _ => null
             };
-
-            if (config != null) _activeButton.Content = config.ToString();
-
-            // Restore theme brushes
-            _activeButton.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "InputBackgroundBrush");
-            _activeButton.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, "PrimaryTextBrush");
+            
+            _activeButton.Content = config?.ToString() ?? "未設定";
+            _activeButton = null;
+            IsRecording = false;
             
             this.PreviewKeyDown -= Window_PreviewKeyDown;
-            _activeButton = null;
         }
 
         private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)

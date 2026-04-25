@@ -132,6 +132,7 @@ namespace YomogiTaskBar.Managers
             var windows = new List<WindowItemViewModel>();
             var currentProcessId = Process.GetCurrentProcess().Id;
             var allScreens = System.Windows.Forms.Screen.AllScreens;
+            var foregroundWindow = GetForegroundWindow();
 
             EnumWindows((hWnd, lParam) =>
             {
@@ -167,7 +168,8 @@ namespace YomogiTaskBar.Managers
                                 ProcessId = (int)processId,
                                 IconSource = GetWindowIcon(hWnd),
                                 IsMinimized = IsIconic(hWnd),
-                                MonitorIndex = monitorIndex
+                                MonitorIndex = monitorIndex,
+                                IsActive = (hWnd == foregroundWindow)
                             });
                         }
                     }

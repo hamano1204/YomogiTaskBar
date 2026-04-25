@@ -12,5 +12,6 @@ namespace YomogiTaskBar.ViewModels
         public bool IsMinimized { get; set; }
         public bool IsSeparator { get; set; }
         public int MonitorIndex { get; set; }
+        public bool IsActive { get; set; }
     }
 }

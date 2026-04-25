@@ -20,42 +20,115 @@
         Closing="Window_Closing"
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
+    <Window.Resources>
+        <!-- Button Focus Style -->
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#007ACC"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ItemHoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- ListBoxItem Focus Style -->
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Border" Background="Transparent" BorderThickness="2" CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ItemHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#007ACC"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsSeparator}" Value="True">
+                                <Setter Property="IsEnabled" Value="False"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
         <!-- Resize Handle -->
-        <Thumb x:Name="ResizeThumb" HorizontalAlignment="Left" Width="6" Cursor="SizeWE" 
-               DragStarted="Thumb_DragStarted" DragDelta="Thumb_DragDelta" DragCompleted="Thumb_DragCompleted" Panel.ZIndex="1">
+        <Thumb x:Name="ResizeThumb" HorizontalAlignment="Left" Width="8" Cursor="SizeWE" 
+               DragStarted="Thumb_DragStarted" DragDelta="Thumb_DragDelta" DragCompleted="Thumb_DragCompleted" Panel.ZIndex="1"
+               AutomationProperties.Name="リサイズハンドル" AutomationProperties.HelpText="ドラッグしてウィンドウ幅を調整">
             <Thumb.Template>
                 <ControlTemplate TargetType="Thumb">
-                    <Border Background="Transparent"/>
+                    <Border x:Name="HandleBorder" Background="Transparent" Width="8">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#20007ACC"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
                 </ControlTemplate>
             </Thumb.Template>
         </Thumb>
         
         <DockPanel x:Name="MainDockPanel">
             <!-- Header (Title Bar) -->
-        <Border x:Name="HeaderBorder" DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Border x:Name="HeaderBorder" DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                AutomationProperties.Name="タイトルバー" AutomationProperties.HelpText="ウィンドウのドラッグ移動とアプリケーション操作">
             <Grid>
-                <TextBlock Text="YomogiTaskBar" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                <TextBlock Text="YomogiTaskBar" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}"
+                           AutomationProperties.Name="YomogiTaskBar" AutomationProperties.HelpText="アプリケーションタイトル"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button x:Name="PinButton" Content="📌" Width="24" Height="24" 
                             Click="PinButton_Click" Background="Transparent" BorderThickness="0"
-                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="ピン留めを切り替え"/>
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="ピン留めを切り替え"
+                            AutomationProperties.Name="ピン留めボタン" AutomationProperties.HelpText="ウィンドウを画面に固定または解除します"/>
                     <Button x:Name="SettingsButton" Content="⚙️" Width="24" Height="24" 
                             Click="SettingsButton_Click" Background="Transparent" BorderThickness="0"
-                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="設定"/>
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand" ToolTip="設定"
+                            AutomationProperties.Name="設定ボタン" AutomationProperties.HelpText="アプリケーション設定を開きます"/>
                     <Button Content="✕" Width="24" Height="24" 
                             Click="CloseButton_Click" Background="Transparent" BorderThickness="0"
-                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand"/>
+                            Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="Bold" Cursor="Hand"
+                            AutomationProperties.Name="閉じるボタン" AutomationProperties.HelpText="アプリケーションを終了します"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Virtual Desktop Footer -->
         <Border x:Name="FooterBorder" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" 
-                Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                AutomationProperties.Name="仮想デスクトップフッター" AutomationProperties.HelpText="現在の仮想デスクトップ情報と切り替えメニュー">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold"/>
-                <TextBlock Text=" ▾" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold"
+                           AutomationProperties.Name="現在のデスクトップ" AutomationProperties.HelpText="現在アクティブな仮想デスクトップ名"/>
+                <TextBlock Text=" ▾" Foreground="{DynamicResource SecondaryTextBrush}"
+                           AutomationProperties.Name="メニュー展開ボタン" AutomationProperties.HelpText="仮想デスクトップ切り替えメニューを展開"/>
             </StackPanel>
             <Border.ContextMenu>
                 <ContextMenu x:Name="DesktopContextMenu">
@@ -68,7 +141,8 @@
         <ListBox x:Name="WindowsList" Margin="6,0,0,0" Background="Transparent" BorderThickness="0" 
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  MouseLeftButtonUp="WindowsList_MouseLeftButtonUp"
-                 KeyDown="WindowsList_KeyDown">
+                 KeyDown="WindowsList_KeyDown"
+                 AutomationProperties.Name="ウィンドウリスト" AutomationProperties.HelpText="実行中のアプリケーション一覧。選択してウィンドウを切り替えます">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="5" Background="Transparent">
@@ -79,19 +153,23 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid Grid.Column="0">
-                                <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" />
+                                <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
+                                       AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="アプリケーションアイコン"/>
                                 <Border x:Name="MonitorBadge" Background="#AA000000" CornerRadius="7" Width="14" Height="14" 
-                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2">
+                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2"
+                                        AutomationProperties.Name="モニターバッジ" AutomationProperties.HelpText="ウィンドウが表示されているモニター番号">
                                     <TextBlock Text="{Binding MonitorIndex}" Foreground="White" FontSize="9" 
                                                HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
                                 </Border>
                             </Grid>
                             <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" 
-                                       Margin="10,0,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                       Margin="10,0,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource PrimaryTextBrush}"
+                                       AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
                             <Button Grid.Column="2" Content="✕" Width="20" Height="20" Margin="5,0,0,0"
                                     Background="Transparent" BorderThickness="0" Foreground="#A000"
                                     FontWeight="Bold" Cursor="Hand" Click="CloseItemButton_Click"
-                                    ToolTip="このウィンドウを閉じる"/>
+                                    ToolTip="このウィンドウを閉じる"
+                                    AutomationProperties.Name="ウィンドウを閉じる" AutomationProperties.HelpText="{Binding Title, StringFormat='{}{0} を閉じます'}"/>
                         </Grid>
                         <!-- Separator line -->
                         <Border x:Name="SeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
@@ -105,6 +183,10 @@
                         <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                             <!-- Make minimized windows look slightly faded -->
                             <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <!-- Highlight active windows -->
+                            <Setter TargetName="ContentGrid" Property="Background" Value="{DynamicResource ItemHoverBrush}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
                             <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>

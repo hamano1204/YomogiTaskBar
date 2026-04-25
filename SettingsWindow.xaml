@@ -163,7 +163,34 @@
                         <StackPanel>
                             <TextBlock Text="アプリをアクティブにする" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
                             <Button x:Name="BtnGlobalActivate" Click="HotkeyButton_Click" Tag="GlobalActivate" 
-                                    Content="Win + Esc" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
+                                    Content="Win + Esc" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"
+                                    AutomationProperties.Name="グローバルアクティベートショートカット" AutomationProperties.HelpText="設定ボタンを押した後、登録したいキーを同時に押してください">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,6"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding IsRecording, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                            <Setter TargetName="Border" Property="Background" Value="#FFE6E6"/>
+                                                            <Setter TargetName="Border" Property="BorderBrush" Value="#FF0000"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource ItemHoverBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Border" Property="Background" Value="#007ACC"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </StackPanel>
                     </Border>
 
