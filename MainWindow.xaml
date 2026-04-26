@@ -208,7 +208,7 @@
                                             <!-- Minimize/Restore Button -->
                                             <Button x:Name="ItemMinRestoreBtn" Content="─" Width="20" Height="20" Margin="0,0,4,0"
                                                     Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#FF808080"
-                                                    Foreground="{DynamicResource PrimaryTextBrush}" FontSize="10" FontWeight="Bold"
+                                                    Foreground="{DynamicResource ButtonIconBrush}" FontSize="10" FontWeight="Bold"
                                                     Cursor="Hand" Click="MinimizeRestoreItemButton_Click" ToolTip="最小化"
                                                     AutomationProperties.Name="最小化/復元ボタン">
                                                 <Button.Style>
@@ -221,8 +221,8 @@
                                                                     </Border>
                                                                     <ControlTemplate.Triggers>
                                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource BorderBrush}"/>
-                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryTextBrush}"/>
+                                                                            <Setter TargetName="Border" Property="Background" Value="#FF808080"/>
+                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="White"/>
                                                                         </Trigger>
                                                                     </ControlTemplate.Triggers>
                                                                 </ControlTemplate>
@@ -235,7 +235,7 @@
                                             <!-- Close Button -->
                                             <Button x:Name="ItemCloseBtn" Content="✕" Width="20" Height="20"
                                                     Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#FF808080"
-                                                    Foreground="{DynamicResource PrimaryTextBrush}" FontSize="10" FontWeight="Bold"
+                                                    Foreground="{DynamicResource ButtonIconBrush}" FontSize="10" FontWeight="Bold"
                                                     Cursor="Hand" Click="CloseItemButton_Click" ToolTip="このウィンドウを閉じる"
                                                     AutomationProperties.Name="ウィンドウを閉じる"
                                                     AutomationProperties.HelpText="{Binding Title, StringFormat='{}{0} を閉じます'}">

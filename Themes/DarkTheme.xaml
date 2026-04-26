@@ -9,6 +9,7 @@
     <Color x:Key="ItemHoverColor">#3E3E42</Color>
     <Color x:Key="ItemSeparatorColor">#2D2D30</Color>
     <Color x:Key="InputBackgroundColor">#2D2D30</Color>
+    <Color x:Key="ButtonIconColor">#000000</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}"/>
@@ -19,4 +20,5 @@
     <SolidColorBrush x:Key="ItemHoverBrush" Color="{StaticResource ItemHoverColor}"/>
     <SolidColorBrush x:Key="ItemSeparatorBrush" Color="{StaticResource ItemSeparatorColor}"/>
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="{StaticResource InputBackgroundColor}"/>
+    <SolidColorBrush x:Key="ButtonIconBrush" Color="{StaticResource ButtonIconColor}"/>
 </ResourceDictionary>
