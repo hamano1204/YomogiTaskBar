@@ -477,12 +477,16 @@ namespace YomogiTaskBar
                     }
                     else if (_settings.NextMonitor.IsPressed(e))
                     {
+                        int selectedIndex = WindowsList.SelectedIndex;
                         _windowManager.MoveToMonitor(selected.Handle, true);
+                        WindowsList.SelectedIndex = selectedIndex;
                         e.Handled = true;
                     }
                     else if (_settings.PrevMonitor.IsPressed(e))
                     {
+                        int selectedIndex = WindowsList.SelectedIndex;
                         _windowManager.MoveToMonitor(selected.Handle, false);
+                        WindowsList.SelectedIndex = selectedIndex;
                         e.Handled = true;
                     }
                     else

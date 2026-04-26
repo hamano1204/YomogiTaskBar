@@ -148,10 +148,9 @@ namespace YomogiTaskBar.Managers
 
             var targetScreen = allScreens[targetIndex];
 
-            // Restore if minimized or maximized for smooth transition
-            bool wasMinimized = NativeMethods.IsIconic(handle);
+            // Restore if maximized for smooth transition (minimized windows stay minimized)
             bool wasMaximized = NativeMethods.IsZoomed(handle);
-            if (wasMinimized || wasMaximized)
+            if (wasMaximized)
             {
                 NativeMethods.ShowWindow(handle, NativeMethods.SW_RESTORE);
             }
