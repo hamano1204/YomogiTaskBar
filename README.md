@@ -17,6 +17,9 @@ YomogiTaskBarは、Windows用の垂直型タスクバーです。
 - .NET 9.0 Runtime / SDK
 
 
+## インストーラー
+[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases/tag/v0.1.0)
+
 ## Build and Run / ビルドと実行
 
 1. Visual Studioでソリューションを開くか、コマンドラインを使用します。
@@ -26,7 +29,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーです。
 dotnet build
 dotnet run --project YomogiTaskBar.csproj
 ```
-
 
 ## Project Structure / プロジェクト構成
 
