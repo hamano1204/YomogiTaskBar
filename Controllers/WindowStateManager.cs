@@ -16,12 +16,17 @@ namespace YomogiTaskBar.Controllers
     {
         private readonly Window _window;
         private readonly IntPtr _windowHandle;
-        private readonly AppSettings _settings;
+        private AppSettings _settings;
 
         public WindowStateManager(Window window, IntPtr windowHandle, AppSettings settings)
         {
             _window = window ?? throw new ArgumentNullException(nameof(window));
             _windowHandle = windowHandle;
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        }
+
+        public void UpdateSettings(AppSettings settings)
+        {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 

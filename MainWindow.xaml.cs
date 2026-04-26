@@ -402,6 +402,7 @@ namespace YomogiTaskBar
             {
                 _settings = settingsWindow.CurrentSettings;
                 ThemeManager.ApplyTheme(_settings.ThemeMode);
+                _stateManager?.UpdateSettings(_settings);
             }
             else
             {
