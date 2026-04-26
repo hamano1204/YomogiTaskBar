@@ -177,7 +177,7 @@
                      AutomationProperties.Name="ウィンドウリスト" AutomationProperties.HelpText="実行中のアプリケーション一覧。選択してウィンドウを切り替えます">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Grid Margin="5,2" Background="Transparent" x:Name="RootGrid">
+                        <Grid Margin="5,11" Background="Transparent" x:Name="RootGrid">
                             <Grid x:Name="ContentGrid">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="32"/>
@@ -198,23 +198,16 @@
                                 <Grid Grid.Column="1">
                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
                                                Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource PrimaryTextBrush}"
+                                               Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
                                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
 
-                                    <!-- Hover buttons overlay: gradient + buttons appear on top of title -->
+                                    <!-- Hover buttons overlay: buttons appear on top of title -->
                                     <Border x:Name="HoverButtonOverlay" HorizontalAlignment="Right" VerticalAlignment="Stretch"
-                                            Opacity="0" Padding="30,0,0,0">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="Transparent" Offset="0"/>
-                                                <GradientStop Color="{DynamicResource ItemHoverColor}" Offset="0.5"/>
-                                                <GradientStop Color="{DynamicResource ItemHoverColor}" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
+                                            Opacity="0" Padding="15,0,0,0" Margin="0,-11,0,-11" Background="Transparent" Panel.ZIndex="10">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
                                             <!-- Minimize/Restore Button -->
                                             <Button x:Name="ItemMinRestoreBtn" Content="─" Width="20" Height="20" Margin="0,0,4,0"
-                                                    Background="#22000000" BorderThickness="0"
+                                                    Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#66808080"
                                                     Foreground="{DynamicResource PrimaryTextBrush}" FontSize="10" FontWeight="Bold"
                                                     Cursor="Hand" Click="MinimizeRestoreItemButton_Click" ToolTip="最小化"
                                                     AutomationProperties.Name="最小化/復元ボタン">
@@ -223,12 +216,13 @@
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="Button">
-                                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="10">
+                                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="10">
                                                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                     </Border>
                                                                     <ControlTemplate.Triggers>
                                                                         <Trigger Property="IsMouseOver" Value="True">
                                                                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryTextBrush}"/>
                                                                         </Trigger>
                                                                     </ControlTemplate.Triggers>
                                                                 </ControlTemplate>
@@ -240,7 +234,7 @@
 
                                             <!-- Close Button -->
                                             <Button x:Name="ItemCloseBtn" Content="✕" Width="20" Height="20"
-                                                    Background="#22000000" BorderThickness="0"
+                                                    Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#66808080"
                                                     Foreground="{DynamicResource PrimaryTextBrush}" FontSize="10" FontWeight="Bold"
                                                     Cursor="Hand" Click="CloseItemButton_Click" ToolTip="このウィンドウを閉じる"
                                                     AutomationProperties.Name="ウィンドウを閉じる"
@@ -250,12 +244,13 @@
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="Button">
-                                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="10">
+                                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="10">
                                                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                     </Border>
                                                                     <ControlTemplate.Triggers>
                                                                         <Trigger Property="IsMouseOver" Value="True">
                                                                             <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="White"/>
                                                                             <Setter Property="Foreground" Value="White"/>
                                                                         </Trigger>
                                                                     </ControlTemplate.Triggers>
@@ -285,6 +280,8 @@
                                 <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
                                 <Setter TargetName="ItemMinRestoreBtn" Property="Content" Value="&#x2191;"/>
                                 <Setter TargetName="ItemMinRestoreBtn" Property="ToolTip" Value="元に戻す"/>
+                                <Setter TargetName="ItemMinRestoreBtn" Property="Opacity" Value="2"/>
+                                <Setter TargetName="ItemCloseBtn" Property="Opacity" Value="2"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
                                 <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
@@ -306,7 +303,7 @@
                 </ListBox.ItemTemplate>
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
-                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="Padding" Value="5,10"/>
                         <Setter Property="Cursor" Value="Hand"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="Template">
