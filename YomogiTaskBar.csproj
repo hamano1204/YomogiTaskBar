@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <AssemblyName>YomogiTaskBar</AssemblyName>
     <RootNamespace>YomogiTaskBar</RootNamespace>
     <ApplicationTitle>YomogiTaskBar</ApplicationTitle>
