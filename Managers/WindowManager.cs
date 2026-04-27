@@ -195,9 +195,11 @@ namespace YomogiTaskBar.Managers
                     return false;
             }
 
-            IntPtr rootOwner = NativeMethods.GetAncestor(hWnd, NativeMethods.GA_ROOTOWNER);
-            if (NativeMethods.GetLastActivePopup(rootOwner) != hWnd)
-                return false;
+            // ルートオーナーの最後のアクティブなポップアップでない場合に除外
+            // Edgeで検索したときにEdgeがタスクバーから見えなくなる不具合があるためコメントアウトして様子見。
+            //IntPtr rootOwner = NativeMethods.GetAncestor(hWnd, NativeMethods.GA_ROOTOWNER);
+            //if (NativeMethods.GetLastActivePopup(rootOwner) != hWnd)
+            //    return false;
 
             int exStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GWL_EXSTYLE);
             
@@ -205,12 +207,15 @@ namespace YomogiTaskBar.Managers
             if ((exStyle & NativeMethods.WS_EX_LAYERED) != 0 && (exStyle & NativeMethods.WS_EX_TRANSPARENT) != 0)
                 return false;
 
+            // 透明レイヤー（WS_EX_LAYERED + WS_EX_TRANSPARENT）を除外
             if ((exStyle & NativeMethods.WS_EX_APPWINDOW) != 0)
                 return true;
 
+            // WS_EX_APPWINDOWがない場合、WS_EX_TOOLWINDOWなら除外。FansyWMが除外できる
             if ((exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0)
                 return false;
 
+            //オーナーウィンドウがある場合はタスクバーから除外。 Brotherのスキャナーが除外できる
             IntPtr owner = NativeMethods.GetWindow(hWnd, NativeMethods.GW_OWNER);
             return owner == IntPtr.Zero;
         }
