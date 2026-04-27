@@ -171,6 +171,8 @@ namespace YomogiTaskBar.Utilities
         public const int SW_RESTORE = 9;
 
         public const uint WM_CLOSE = 0x0010;
+        public const uint WM_SYSCOMMAND = 0x0112;
+        public const uint SC_CLOSE = 0xF060;
         public const uint WM_GETICON = 0x007F;
 
         public const int ICON_SMALL = 0;

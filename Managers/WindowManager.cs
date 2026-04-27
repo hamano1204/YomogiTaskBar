@@ -112,7 +112,7 @@ namespace YomogiTaskBar.Managers
 
         public void CloseWindow(IntPtr handle)
         {
-            NativeMethods.SendMessage(handle, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            NativeMethods.SendMessage(handle, NativeMethods.WM_SYSCOMMAND, new IntPtr((int)NativeMethods.SC_CLOSE), IntPtr.Zero);
         }
 
         public void MinimizeWindow(IntPtr handle)
