@@ -18,7 +18,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーです。
 
 
 ## インストーラー
-[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases/tag/v0.1.2)
+[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases/tag/v0.1.3)
 
 ## Build and Run / ビルドと実行
 
