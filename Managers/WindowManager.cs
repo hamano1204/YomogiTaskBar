@@ -338,7 +338,12 @@ namespace YomogiTaskBar.Managers
 
         private bool IsTaskbarWindowAllDesktops(IntPtr hWnd)
         {
-            if (!NativeMethods.IsWindowVisible(hWnd))
+            // Check if window is on other virtual desktops
+            // Windows on other desktops are not visible, but should be shown
+            bool isOnOtherDesktop = !VirtualDesktopHelper.IsWindowOnCurrentDesktop(hWnd);
+
+            // Only check IsWindowVisible for windows on current desktop
+            if (!isOnOtherDesktop && !NativeMethods.IsWindowVisible(hWnd))
                 return false;
 
             int cloakedVal;
