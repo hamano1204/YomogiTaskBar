@@ -30,11 +30,13 @@ namespace YomogiTaskBar
         private IntPtr _windowHandle;
         private AppSettings _settings;
         private DispatcherTimer? _autoHideTimer;
+        private LayoutMode _currentLayoutMode;
 
         public MainWindow()
         {
             InitializeComponent();
             _settings = SettingsManager.Load();
+            _currentLayoutMode = _settings.LayoutMode;
             _settings.LaunchOnStartup = StartupManager.IsEnabled();
             ThemeManager.ApplyTheme(_settings.ThemeMode);
             _windowManager = new WindowManager();
@@ -195,7 +197,7 @@ namespace YomogiTaskBar
 
         private void RefreshWindowList()
         {
-            var windows = _windowManager.GetRunningWindows();
+            var windows = _windowManager.GetRunningWindows(_currentLayoutMode);
             
             var existingHandles = _windows.Select(w => w.Handle).ToHashSet();
             var newHandles = windows.Select(w => w.Handle).ToHashSet();
@@ -403,6 +405,13 @@ namespace YomogiTaskBar
                 _settings = settingsWindow.CurrentSettings;
                 ThemeManager.ApplyTheme(_settings.ThemeMode);
                 _stateManager?.UpdateSettings(_settings);
+                
+                // Reflect layout mode change immediately
+                if (_currentLayoutMode != _settings.LayoutMode)
+                {
+                    _currentLayoutMode = _settings.LayoutMode;
+                    RefreshWindowList();
+                }
             }
             else
             {

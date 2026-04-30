@@ -4,6 +4,12 @@ using YomogiTaskBar.Managers;
 
 namespace YomogiTaskBar.Models
 {
+    public enum LayoutMode
+    {
+        Simple,         // シンプルレイアウト（現在のデスクトップのみ）
+        AllDesktops     // デスクトップをすべて表示
+    }
+
     public class ShortcutConfig
     {
         public Key Key { get; set; }
@@ -75,6 +81,7 @@ namespace YomogiTaskBar.Models
     {
         public string ThemeMode { get; set; } = "System"; // Light, Dark, System
         public bool LaunchOnStartup { get; set; } = false;
+        public LayoutMode LayoutMode { get; set; } = LayoutMode.Simple; // アプリ一覧のレイアウトモード
         public ShortcutConfig GlobalActivate { get; set; } = new ShortcutConfig { Key = Key.Escape, Modifiers = ModifierKeys.Windows };
         public ShortcutConfig Minimize { get; set; } = new ShortcutConfig { Key = Key.J, Modifiers = ModifierKeys.Control };
         public ShortcutConfig ToggleMaximize { get; set; } = new ShortcutConfig { Key = Key.K, Modifiers = ModifierKeys.Control };

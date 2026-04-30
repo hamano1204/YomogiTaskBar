@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using YomogiTaskBar.Models;
 using YomogiTaskBar.Managers;
+using System.Linq;
 
 namespace YomogiTaskBar
 {
@@ -44,6 +45,7 @@ namespace YomogiTaskBar
             {
                 ThemeMode = settings.ThemeMode,
                 LaunchOnStartup = settings.LaunchOnStartup,
+                LayoutMode = settings.LayoutMode,
                 GlobalActivate = new ShortcutConfig { Key = settings.GlobalActivate.Key, Modifiers = settings.GlobalActivate.Modifiers },
                 Minimize = new ShortcutConfig { Key = settings.Minimize.Key, Modifiers = settings.Minimize.Modifiers },
                 ToggleMaximize = new ShortcutConfig { Key = settings.ToggleMaximize.Key, Modifiers = settings.ToggleMaximize.Modifiers },
@@ -72,6 +74,16 @@ namespace YomogiTaskBar
                 if (item.Tag.ToString() == CurrentSettings.ThemeMode)
                 {
                     ThemeComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+
+            // Initialize LayoutMode ComboBox
+            foreach (ComboBoxItem item in LayoutModeComboBox.Items)
+            {
+                if (item.Tag.ToString() == CurrentSettings.LayoutMode.ToString())
+                {
+                    LayoutModeComboBox.SelectedItem = item;
                     break;
                 }
             }
@@ -193,6 +205,15 @@ namespace YomogiTaskBar
         {
             if (_isInitializing) return;
             CurrentSettings.LaunchOnStartup = LaunchOnStartupCheckBox.IsChecked == true;
+        }
+
+        private void LayoutModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing) return;
+            if (LayoutModeComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                CurrentSettings.LayoutMode = Enum.Parse<LayoutMode>(item.Tag.ToString() ?? "Simple");
+            }
         }
     }
 }

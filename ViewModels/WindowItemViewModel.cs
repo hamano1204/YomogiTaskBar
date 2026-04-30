@@ -15,6 +15,8 @@ namespace YomogiTaskBar.ViewModels
         private bool _isSeparator;
         private int _monitorIndex;
         private bool _isActive;
+        private Guid _desktopId;
+        private string _desktopName = string.Empty;
 
         public IntPtr Handle
         {
@@ -62,6 +64,18 @@ namespace YomogiTaskBar.ViewModels
         {
             get => _isActive;
             set { if (_isActive != value) { _isActive = value; OnPropertyChanged(); } }
+        }
+
+        public Guid DesktopId
+        {
+            get => _desktopId;
+            set { if (_desktopId != value) { _desktopId = value; OnPropertyChanged(); } }
+        }
+
+        public string DesktopName
+        {
+            get => _desktopName;
+            set { if (_desktopName != value) { _desktopName = value; OnPropertyChanged(); } }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

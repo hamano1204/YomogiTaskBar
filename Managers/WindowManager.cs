@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Linq;
 using YomogiTaskBar.ViewModels;
 using YomogiTaskBar.Utilities;
+using YomogiTaskBar.Models;
 
 namespace YomogiTaskBar.Managers
 {
@@ -18,6 +19,23 @@ namespace YomogiTaskBar.Managers
         private readonly Dictionary<IntPtr, ImageSource> _iconCache = new Dictionary<IntPtr, ImageSource>();
 
         public List<WindowItemViewModel> GetRunningWindows()
+        {
+            return GetRunningWindowsSimple();
+        }
+
+        public List<WindowItemViewModel> GetRunningWindows(LayoutMode layoutMode)
+        {
+            if (layoutMode == LayoutMode.Simple)
+            {
+                return GetRunningWindowsSimple();
+            }
+            else
+            {
+                return GetRunningWindowsAllDesktops();
+            }
+        }
+
+        private List<WindowItemViewModel> GetRunningWindowsSimple()
         {
             var windows = new List<WindowItemViewModel>();
             var currentProcessId = Process.GetCurrentProcess().Id;
@@ -99,6 +117,133 @@ namespace YomogiTaskBar.Managers
             sortedWindows.AddRange(minimizedWindows);
 
             return sortedWindows;
+        }
+
+        private List<WindowItemViewModel> GetRunningWindowsAllDesktops()
+        {
+            var windows = new List<WindowItemViewModel>();
+            var currentProcessId = Process.GetCurrentProcess().Id;
+            var allScreens = System.Windows.Forms.Screen.AllScreens;
+            var foregroundWindow = NativeMethods.GetForegroundWindow();
+            var desktops = VirtualDesktopHelper.GetDesktops();
+            
+            // Get virtual desktop manager for desktop ID lookup
+            var vdManager = GetVirtualDesktopManager();
+
+            // Clean up cache for closed windows
+            var currentHandles = new HashSet<IntPtr>();
+
+            NativeMethods.EnumWindows((hWnd, lParam) =>
+            {
+                if (IsTaskbarWindowAllDesktops(hWnd))
+                {
+                    NativeMethods.GetWindowThreadProcessId(hWnd, out uint processId);
+
+                    currentHandles.Add(hWnd);
+
+                    // Exclude our own app
+                    if (processId == currentProcessId)
+                        return true;
+
+                    StringBuilder titleBuilder = new StringBuilder(256);
+                    if (NativeMethods.GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity) > 0)
+                    {
+                        var title = titleBuilder.ToString();
+                        
+                        // Filter out empty descriptions, Program Manager, and known overlay/hidden windows
+                        string[] ignoredTitles = { "Program Manager", "Recording", "Microsoft Text Input Application" };
+                        
+                        if (!string.IsNullOrWhiteSpace(title) && !ignoredTitles.Contains(title))
+                        {
+                            var screen = System.Windows.Forms.Screen.FromHandle(hWnd);
+                            int monitorIndex = 0;
+                            if (allScreens.Length > 1)
+                            {
+                                monitorIndex = Array.IndexOf(allScreens, allScreens.FirstOrDefault(s => s.DeviceName == screen.DeviceName)) + 1;
+                            }
+
+                            // Get virtual desktop information
+                            Guid desktopId = Guid.Empty;
+                            string desktopName = "Unknown";
+                            if (vdManager != null)
+                            {
+                                try
+                                {
+                                    vdManager.GetWindowDesktopId(hWnd, out desktopId);
+                                    var desktopInfo = desktops.FirstOrDefault(d => d.Id == desktopId);
+                                    desktopName = desktopInfo?.Name ?? "Unknown";
+                                }
+                                catch { }
+                            }
+
+                            windows.Add(new WindowItemViewModel
+                            {
+                                Handle = hWnd,
+                                Title = title,
+                                ProcessId = (int)processId,
+                                IconSource = GetWindowIcon(hWnd),
+                                IsMinimized = NativeMethods.IsIconic(hWnd),
+                                MonitorIndex = monitorIndex,
+                                IsActive = (hWnd == foregroundWindow),
+                                DesktopId = desktopId,
+                                DesktopName = desktopName
+                            });
+                        }
+                    }
+                }
+                return true;
+            }, IntPtr.Zero);
+
+            // Remove closed windows from cache
+            var keysToRemove = _iconCache.Keys.Where(k => !currentHandles.Contains(k)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _iconCache.Remove(key);
+            }
+
+            // Sort: virtual desktop order → monitor order → window state → PID
+            var sortedWindows = windows
+                .OrderBy(w => desktops.FindIndex(d => d.Id == w.DesktopId))
+                .ThenBy(w => w.MonitorIndex)
+                .ThenBy(w => w.IsMinimized) // Normal windows first, then minimized
+                .ThenBy(w => w.ProcessId)
+                .ToList();
+
+            // Group by virtual desktop and insert separators
+            var result = new List<WindowItemViewModel>();
+            Guid? lastDesktopId = null;
+
+            foreach (var window in sortedWindows)
+            {
+                // Insert separator when desktop changes
+                if (lastDesktopId != null && window.DesktopId != lastDesktopId)
+                {
+                    result.Add(new WindowItemViewModel 
+                    { 
+                        IsSeparator = true, 
+                        Title = window.DesktopName 
+                    });
+                }
+                
+                result.Add(window);
+                lastDesktopId = window.DesktopId;
+            }
+
+            return result;
+        }
+
+        private IVirtualDesktopManager? GetVirtualDesktopManager()
+        {
+            try
+            {
+                var type = Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a"));
+                if (type != null)
+                {
+                    return (IVirtualDesktopManager?)Activator.CreateInstance(type);
+                }
+            }
+            catch { }
+            return null;
         }
 
         public void ActivateWindow(IntPtr handle)
@@ -188,6 +333,11 @@ namespace YomogiTaskBar.Managers
             if (!VirtualDesktopHelper.IsWindowOnCurrentDesktop(hWnd))
                 return false;
 
+            return IsTaskbarWindowAllDesktops(hWnd);
+        }
+
+        private bool IsTaskbarWindowAllDesktops(IntPtr hWnd)
+        {
             // 1. サイズが異常（0x0のような見えないウィンドウ）を除外
             if (NativeMethods.GetWindowRect(hWnd, out RECT rect))
             {
