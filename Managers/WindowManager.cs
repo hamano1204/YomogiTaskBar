@@ -346,10 +346,15 @@ namespace YomogiTaskBar.Managers
             if (!isOnOtherDesktop && !NativeMethods.IsWindowVisible(hWnd))
                 return false;
 
-            int cloakedVal;
-            NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out cloakedVal, sizeof(int));
-            if (cloakedVal != 0)
-                return false;
+            // Only check DWMWA_CLOAKED for windows on current desktop
+            // Windows on other desktops may be cloaked but should still be shown
+            if (!isOnOtherDesktop)
+            {
+                int cloakedVal;
+                NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out cloakedVal, sizeof(int));
+                if (cloakedVal != 0)
+                    return false;
+            }
 
             // 1. サイズが異常（0x0のような見えないウィンドウ）を除外
             if (NativeMethods.GetWindowRect(hWnd, out RECT rect))
