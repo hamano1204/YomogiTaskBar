@@ -111,7 +111,7 @@ namespace YomogiTaskBar.Managers
 
             if (normalWindows.Count > 0 && minimizedWindows.Count > 0)
             {
-                sortedWindows.Add(new WindowItemViewModel { IsSeparator = true, Title = "Separator" });
+                sortedWindows.Add(new WindowItemViewModel { IsSeparator = true, IsDesktopSeparator = false, Title = "" });
             }
 
             sortedWindows.AddRange(minimizedWindows);
@@ -218,10 +218,11 @@ namespace YomogiTaskBar.Managers
                 // Insert separator when desktop changes
                 if (lastDesktopId != null && window.DesktopId != lastDesktopId)
                 {
-                    result.Add(new WindowItemViewModel 
-                    { 
-                        IsSeparator = true, 
-                        Title = window.DesktopName 
+                    result.Add(new WindowItemViewModel
+                    {
+                        IsSeparator = true,
+                        IsDesktopSeparator = true,
+                        Title = window.DesktopName
                     });
                 }
                 

@@ -228,6 +228,10 @@ namespace YomogiTaskBar
                     }
                     else
                     {
+                        // Update separator properties
+                        if (currentSeparator.IsDesktopSeparator != newWin.IsDesktopSeparator) currentSeparator.IsDesktopSeparator = newWin.IsDesktopSeparator;
+                        if (currentSeparator.Title != newWin.Title) currentSeparator.Title = newWin.Title;
+
                         int currentIndex = _windows.IndexOf(currentSeparator);
                         if (currentIndex != i)
                         {

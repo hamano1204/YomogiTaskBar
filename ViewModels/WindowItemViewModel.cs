@@ -13,6 +13,7 @@ namespace YomogiTaskBar.ViewModels
         private ImageSource? _iconSource;
         private bool _isMinimized;
         private bool _isSeparator;
+        private bool _isDesktopSeparator;
         private int _monitorIndex;
         private bool _isActive;
         private Guid _desktopId;
@@ -52,6 +53,12 @@ namespace YomogiTaskBar.ViewModels
         {
             get => _isSeparator;
             set { if (_isSeparator != value) { _isSeparator = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsDesktopSeparator
+        {
+            get => _isDesktopSeparator;
+            set { if (_isDesktopSeparator != value) { _isDesktopSeparator = value; OnPropertyChanged(); } }
         }
 
         public int MonitorIndex

@@ -264,8 +264,12 @@
                                     </Border>
                                 </Grid>
                             </Grid>
-                            <!-- Separator line -->
-                            <Border x:Name="SeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
+                            <!-- Separator line (for simple layout) -->
+                            <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
+                            <!-- Separator with desktop name (for all desktops layout) -->
+                            <Border x:Name="DesktopNameBorder" Background="{DynamicResource HeaderBackgroundBrush}" Margin="0,8,0,4" Padding="12,6" CornerRadius="4" Visibility="Collapsed">
+                                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
                         </Grid>
                         <DataTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -273,9 +277,24 @@
                             </Trigger>
                             <DataTrigger Binding="{Binding IsSeparator}" Value="True">
                                 <Setter TargetName="ContentGrid" Property="Visibility" Value="Collapsed"/>
-                                <Setter TargetName="SeparatorBorder" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSeparator}" Value="True"/>
+                                    <Condition Binding="{Binding IsDesktopSeparator}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="SimpleSeparatorBorder" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="DesktopNameBorder" Property="Visibility" Value="Collapsed"/>
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSeparator}" Value="True"/>
+                                    <Condition Binding="{Binding IsDesktopSeparator}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="SimpleSeparatorBorder" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="DesktopNameBorder" Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
                             <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                                 <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
                                 <Setter TargetName="ItemMinRestoreBtn" Property="Content" Value="&#x2191;"/>
