@@ -198,75 +198,12 @@ namespace YomogiTaskBar
         private void RefreshWindowList()
         {
             var windows = _windowManager.GetRunningWindows(_currentLayoutMode);
-            
-            var existingHandles = _windows.Select(w => w.Handle).ToHashSet();
-            var newHandles = windows.Select(w => w.Handle).ToHashSet();
 
-            // Remove closed windows
-            for (int i = _windows.Count - 1; i >= 0; i--)
+            // Clear and rebuild the list (simpler approach for multiple separators)
+            _windows.Clear();
+            foreach (var window in windows)
             {
-                if (!_windows[i].IsSeparator && !newHandles.Contains(_windows[i].Handle))
-                {
-                    _windows.RemoveAt(i);
-                }
-            }
-
-            var currentSeparator = _windows.FirstOrDefault(w => w.IsSeparator);
-            var newSeparator = windows.FirstOrDefault(w => w.IsSeparator);
-
-            // Update or Insert
-            for (int i = 0; i < windows.Count; i++)
-            {
-                var newWin = windows[i];
-
-                if (newWin.IsSeparator)
-                {
-                    if (currentSeparator == null)
-                    {
-                        _windows.Insert(i, newWin);
-                        currentSeparator = newWin;
-                    }
-                    else
-                    {
-                        // Update separator properties
-                        if (currentSeparator.IsDesktopSeparator != newWin.IsDesktopSeparator) currentSeparator.IsDesktopSeparator = newWin.IsDesktopSeparator;
-                        if (currentSeparator.Title != newWin.Title) currentSeparator.Title = newWin.Title;
-
-                        int currentIndex = _windows.IndexOf(currentSeparator);
-                        if (currentIndex != i)
-                        {
-                            _windows.Move(currentIndex, i);
-                        }
-                    }
-                    continue;
-                }
-
-                var existingWin = _windows.FirstOrDefault(w => w.Handle == newWin.Handle);
-                if (existingWin == null)
-                {
-                    _windows.Insert(i, newWin);
-                }
-                else
-                {
-                    // Update properties if changed
-                    if (existingWin.Title != newWin.Title) existingWin.Title = newWin.Title;
-                    if (existingWin.IsMinimized != newWin.IsMinimized) existingWin.IsMinimized = newWin.IsMinimized;
-                    if (existingWin.IsActive != newWin.IsActive) existingWin.IsActive = newWin.IsActive;
-                    if (existingWin.MonitorIndex != newWin.MonitorIndex) existingWin.MonitorIndex = newWin.MonitorIndex;
-                    if (existingWin.IconSource != newWin.IconSource) existingWin.IconSource = newWin.IconSource;
-
-                    int currentIndex = _windows.IndexOf(existingWin);
-                    if (currentIndex != i)
-                    {
-                        _windows.Move(currentIndex, i);
-                    }
-                }
-            }
-            
-            // Remove separator if no longer needed
-            if (newSeparator == null && currentSeparator != null)
-            {
-                _windows.Remove(currentSeparator);
+                _windows.Add(window);
             }
 
             // Update current desktop name

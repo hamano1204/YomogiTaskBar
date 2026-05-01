@@ -225,7 +225,18 @@ namespace YomogiTaskBar.Managers
                         Title = window.DesktopName
                     });
                 }
-                
+
+                // Insert separator for first desktop
+                if (lastDesktopId == null)
+                {
+                    result.Add(new WindowItemViewModel
+                    {
+                        IsSeparator = true,
+                        IsDesktopSeparator = true,
+                        Title = window.DesktopName
+                    });
+                }
+
                 result.Add(window);
                 lastDesktopId = window.DesktopId;
             }
