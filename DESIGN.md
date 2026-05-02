@@ -20,8 +20,8 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - **フレームワーク**: .NET 9.0
 - **UI**: WPF (Windows Presentation Foundation)
 - **言語**: C#
-- **ターゲット**: Windows 10 (Build 19041) 以降
-- **依存関係**: Windows Forms (NotifyIcon用)
+- **ターゲット**: Windows 10 (Build 19041.0) 以降
+- **依存関係**: Windows Forms (NotifyIcon用), Windows.Management.Deployment (UWPアイコン取得用)
 
 ---
 
@@ -31,7 +31,8 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                      App.xaml                           │
-│                 (多重起動防止)                           │
+│              (アプリケーションエントリーポイント)         │
+│              App.xaml.cs (多重起動防止)                   │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
@@ -48,11 +49,9 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 │  │  │  Managers                                  │  │  │
 │  │  │  - WindowManager                           │  │  │
 │  │  │  - AppBarManager                           │  │  │
-│  │  │  - SettingsManager                          │  │  │
-│  │  │  - ThemeManager                            │  │  │
+│  │  │  - SettingsManager                         │  │  │
 │  │  │  - HotkeyListener                          │  │  │
 │  │  │  - StartupManager                          │  │  │
-│  │  │  - VirtualDesktopHelper                    │  │  │
 │  │  └────────────────────────────────────────────┘  │  │
 │  └──────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
@@ -63,8 +62,8 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 │  ViewModels │ │ Models  │ │  Utilities   │
 │             │ │         │ │              │
 │ WindowItem  │ │Settings │ │ NativeMethods│
-│ ViewModel   │ │Window   │ │ Logger       │
-│             │ │Settings │ │              │
+│ ViewModel   │ │(統合)   │ │ Logger       │
+│             │ │         │ │              │
 └─────────────┘ └─────────┘ └──────────────┘
 ```
 
@@ -74,7 +73,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - **Controller Layer**: AppBarController, WindowStateManager
 - **Manager Layer**: 各機能マネージャー
 - **ViewModel Layer**: WindowItemViewModel
-- **Model Layer**: AppSettings, WindowSettings, ShortcutConfig
+- **Model Layer**: Settings (AppSettings, WindowSettings, ShortcutConfig, LayoutMode, MonitorIndicatorDisplay)
 - **Utility Layer**: NativeMethods, Logger
 
 ---
@@ -93,24 +92,27 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 
 **主要機能**:
 - ウィンドウリストの表示と更新
-- グローバルホットキーの登録と処理
+- グローバルホットキーの登録と処理 (Win+Esc)
 - マウスイベント処理（ドラッグ、リサイズ、エッジトリガー）
-- 仮想デスクトップ操作
+- 仮想デスクトップ操作（切り替え、作成、削除）
 - 設定画面の表示
 - System Trayアイコンの管理
+- テーマ適用
+- キーボードナビゲーションと選択状態管理
 
 **依存関係**:
 - AppBarController: AppBar機能の制御
 - WindowStateManager: ウィンドウ状態の永続化
 - WindowManager: ウィンドウ操作
-- ThemeManager: テーマ適用
 - SettingsManager: 設定管理
 
 ### 3.3 SettingsWindow.xaml / SettingsWindow.xaml.cs
 **役割**: 設定画面のUIと制御
 
 **主要機能**:
-- テーマ設定
+- テーマ設定 (System/Light/Dark)
+- レイアウトモード設定 (Simple/AllDesktops)
+- モニターインジケーター設定 (None/Left/Right)
 - スタートアップ設定
 - ホットキー設定
 - 設定の保存・キャンセル
@@ -156,33 +158,28 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 **役割**: 実行中ウィンドウの取得と操作
 
 **主要機能**:
-- 実行中ウィンドウの列挙とフィルタリング
+- 実行中ウィンドウの列挙とフィルタリング (2モード: Simple/AllDesktops)
 - ウィンドウのアクティブ化、最小化、最大化、閉じる
 - ウィンドウのモニター間移動
-- ウィンドウアイコンの取得（UWP対応）
-- 仮想デスクトップフィルタリング
+- ウィンドウアイコンの取得（UWP対応: PackageManager使用）
+- 仮想デスクトップフィルタリング (IVirtualDesktopManager使用)
+- アイコンキャッシュ管理
 
 **依存関係**:
 - NativeMethods: Windows API呼び出し
-- VirtualDesktopHelper: 仮想デスクトップ判定
+- Windows.Management.Deployment: UWPアイコン取得用
 
 #### 3.5.3 SettingsManager
 **役割**: 設定ファイルの読み書き
 
 **主要機能**:
-- JSON形式での設定の保存・読み込み
+- JSON形式での設定の保存・読み込み (System.Text.Json使用)
 - デフォルト設定の提供
+- 設定ファイルの検証
 
 **保存場所**: `%APPDATA%\YomogiTaskBar\settings.json`
 
-#### 3.5.4 ThemeManager
-**役割**: テーマの適用
-
-**主要機能**:
-- Light/Dark/Systemテーマの切り替え
-- リソースディクショナリの適用
-
-#### 3.5.5 HotkeyListener
+#### 3.5.4 HotkeyListener
 **役割**: グローバルホットキーの登録と処理
 
 **主要機能**:
@@ -190,70 +187,90 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - ホットキーの解除
 - 修飾キーの変換
 
-#### 3.5.6 StartupManager
-**役割**: スタートアップ起動の管理
+#### 3.5.5 StartupManager
+**役割**: スタートアップ起動の管理 (レジストリベース)
 
 **主要機能**:
-- スタートアップフォルダへのショートカット作成・削除
+- レジストリ (`HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`) への登録・削除
 - スタートアップ有効状態の確認
-
-#### 3.5.7 VirtualDesktopHelper
-**役割**: 仮想デスクトップ操作
-
-**主要機能**:
-- 仮想デスクトップの一覧取得
-- デスクトップ切り替え
-- 新規デスクトップ作成
-- 現在のデスクトップ削除
-- ウィンドウのデスクトップ判定
 
 ### 3.6 ViewModels
 
 #### 3.6.1 WindowItemViewModel
-**役割**: ウィンドウリストアイテムのデータモデル
+**役割**: ウィンドウリストアイテムのデータモデル (INotifyPropertyChanged実装)
 
 **プロパティ**:
 - Handle: ウィンドウハンドル
 - Title: ウィンドウタイトル
 - ProcessId: プロセスID
-- IconSource: アイコン
+- IconSource: アイコン (ImageSource)
 - IsMinimized: 最小化状態
 - IsSeparator: セパレータフラグ
+- IsDesktopSeparator: デスクトップ区切りフラグ
 - MonitorIndex: モニターインデックス
 - IsActive: アクティブ状態
+- DesktopId: 仮想デスクトップID
+- DesktopName: デスクトップ名
+- IsCurrentDesktop: 現在のデスクトップフラグ
+- ShouldShowLeftIndicator: 左モニターインジケーター表示フラグ
+- ShouldShowRightIndicator: 右モニターインジケーター表示フラグ
 
-### 3.7 Models
+### 3.7 Models (Settings.cs)
 
-#### 3.7.1 AppSettings
-**役割**: アプリケーション全体の設定
+#### 3.7.1 LayoutMode (Enum)
+**役割**: アプリ一覧のレイアウトモード
 
-**プロパティ**:
-- ThemeMode: テーマモード（Light/Dark/System）
-- LaunchOnStartup: スタートアップ起動フラグ
-- GlobalActivate: グローバルアクティベートホットキー
-- Minimize: 最小化ホットキー
-- ToggleMaximize: 最大化切り替えホットキー
-- Close: 閉じるホットキー
-- NextMonitor: 次のモニターへ移動ホットキー
-- PrevMonitor: 前のモニターへ移動ホットキー
-- WindowSettings: ウィンドウ設定
+**値**:
+- Simple: シンプルレイアウト（現在のデスクトップのみ）
+- AllDesktops: すべてのデスクトップのウィンドウを表示
 
-#### 3.7.2 WindowSettings
-**役割**: ウィンドウ位置と表示設定
+#### 3.7.2 MonitorIndicatorDisplay (Enum)
+**役割**: モニターインジケーターの表示設定
 
-**プロパティ**:
-- IsAppBarMode: AppBarモードフラグ
-- Edge: 配置エッジ（左/右）
-- MonitorIndex: モニターインデックス
-- WindowWidth: ウィンドウ幅
-- LastMonitorCount: 前回のモニター数
+**値**:
+- None: 表示しない
+- Left: 左側に表示
+- Right: 右側に表示
 
 #### 3.7.3 ShortcutConfig
 **役割**: ショートカットキー設定
 
 **プロパティ**:
-- Key: キー
-- Modifiers: 修飾キー
+- Key: キー (System.Windows.Input.Key)
+- Modifiers: 修飾キー (System.Windows.Input.ModifierKeys)
+
+**メソッド**:
+- ToString(): ショートカット表示文字列を生成 (例: "Ctrl + J")
+- IsPressed(KeyEventArgs): キーイベントがこのショートカットと一致するか判定
+
+#### 3.7.4 WindowSettings
+**役割**: ウィンドウ位置と表示設定
+
+**プロパティ**:
+- IsAppBarMode: AppBarモードフラグ（常にtrue）
+- Edge: 配置エッジ（ABEdge.Left/Right）
+- MonitorIndex: モニターインデックス
+- WindowWidth: ウィンドウ幅（MinWindowWidth〜MaxWindowWidthの範囲でクランプ）
+- LastMonitorCount: 前回のモニター数
+
+**メソッド**:
+- ValidateAndFix(): 設定値の検証と修正
+
+#### 3.7.5 AppSettings
+**役割**: アプリケーション全体の設定
+
+**プロパティ**:
+- ThemeMode: テーマモード（"Light"/"Dark"/"System"）
+- LaunchOnStartup: スタートアップ起動フラグ
+- LayoutMode: レイアウトモード（Simple/AllDesktops）
+- MonitorIndicatorDisplay: モニターインジケーター表示設定
+- GlobalActivate: グローバルアクティベートホットキー（デフォルト: Win+Esc）
+- Minimize: 最小化ホットキー（デフォルト: Ctrl+J）
+- ToggleMaximize: 最大化切り替えホットキー（デフォルト: Ctrl+K）
+- Close: 閉じるホットキー（デフォルト: Ctrl+L）
+- NextMonitor: 次のモニターへ移動ホットキー（デフォルト: Ctrl+I）
+- PrevMonitor: 前のモニターへ移動ホットキー（デフォルト: Ctrl+U）
+- WindowSettings: ウィンドウ設定（WindowSettingsインスタンス）
 
 ### 3.8 Utilities
 
@@ -269,12 +286,16 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - その他多数のWindows API
 
 #### 3.8.2 Logger
-**役割**: ログ出力
+**役割**: ログ出力（Debug.WriteLineベース）
 
-**機能**:
-- ログレベル（Info, Warning, Error, Debug）
-- 操作開始・完了ログ
-- エラーログ
+**メソッド**:
+- LogInfo(string, string): 情報ログ
+- LogWarning(string, string): 警告ログ
+- LogError(string, Exception?, string): エラーログ
+- LogDebug(string, string): デバッグログ（DEBUGビルドのみ）
+- LogOperationStart(string, string): 操作開始ログ
+- LogOperationComplete(string, string): 操作完了ログ
+- LogOperationFailed(string, Exception?, string): 操作失敗ログ
 
 ---
 
@@ -299,13 +320,13 @@ App.xaml (OnStartup)
 ### 4.2 ウィンドウリスト更新シーケンス
 ```
 DispatcherTimer (Tick)
-  → VirtualDesktopHelper.MoveToCurrentDesktop
+  → VirtualDesktopHelper.MoveToCurrentDesktop (MainWindow.xaml.cs内)
   → RefreshWindowList
     → WindowManager.GetRunningWindows
       → EnumWindows
       → フィルタリング（可視、クローク、仮想デスクトップ）
-      → アイコン取得
-      → ソート（通常→最小化）
+      → アイコン取得 (UWP対応込み)
+      → ソート（通常→最小化、またはデスクトップ順）
     → ObservableCollection更新
 ```
 
@@ -369,6 +390,8 @@ MainWindow (Window_Closing)
 {
   "ThemeMode": "System",
   "LaunchOnStartup": false,
+  "LayoutMode": "Simple",
+  "MonitorIndicatorDisplay": "Right",
   "GlobalActivate": {
     "Key": "Escape",
     "Modifiers": "Windows"
@@ -408,13 +431,13 @@ MainWindow (Window_Closing)
 ## 7. 既知の制約・注意点
 
 ### 7.1 ウィンドウフィルタリング
-- Edgeブラウザで検索した際にEdgeがタスクバーから見えなくなる問題があるため、一部のフィルタリングロジックをコメントアウトしている（WindowManager.cs:199-202）
+- Edgeブラウザで検索した際にEdgeがタスクバーから見えなくなる問題があるため、一部のフィルタリングロジックをコメントアウトしている（WindowManager.cs:386-388）
 
 ### 7.2 アイコンキャッシュ
-- 最小化されたUWPアプリは汎用アイコンを返すことがあるため、最小化状態のウィンドウはアイコンをキャッシュしない（WindowManager.cs:326-331）
+- 最小化されたUWPアプリは汎用アイコンを返すことがあるため、最小化状態のウィンドウはアイコンをキャッシュしない（WindowManager.cs:514-517）
 
 ### 7.3 ピンモード
-- 安定性のため、起動時は常にピン留めモードで開始する（MainWindow.xaml.cs:49-50）
+- 安定性のため、起動時は常にピン留めモードで開始する（MainWindow.xaml.cs:66-68）
 
 ### 7.4 モニター構成
 - モニター数が変更された場合、自動的に最初のモニターにリセットされる（WindowStateManager.cs:78-83）
@@ -425,14 +448,16 @@ MainWindow (Window_Closing)
 
 ### 8.1 アーキテクチャ
 - MVVMパターンの完全な採用（現在はViewModelのみでModelとViewの分離が不完全）
-- 依存性注入の導入
-- イベントベースの疎結合化
+- 依存性注入コンテナの導入
+- イベントベースの疎結合化（Messengerパターン）
+- VirtualDesktopHelperとThemeManagerの分離（独立したクラスとして実装）
 
 ### 8.2 機能
 - ウィンドウのピン留め（特定のウィンドウを常にリストの上部に表示）
 - ウィンドウのグループ化（同じアプリのウィンドウをグループ化）
-- カスタムテーマのサポート
+- カスタムテーマのサポート（ユーザー定義カラー）
 - プラグインシステム
+- ウィンドウ検索機能
 
 ### 8.3 テスト
 - 単体テストの追加

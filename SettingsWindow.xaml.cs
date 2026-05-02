@@ -7,6 +7,8 @@ using System.Windows.Input;
 using YomogiTaskBar.Models;
 using YomogiTaskBar.Managers;
 using System.Linq;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace YomogiTaskBar
 {
@@ -40,6 +42,9 @@ namespace YomogiTaskBar
             _isInitializing = true;
             InitializeComponent();
             
+            // Set version from .csproj
+            SetVersionFromAssembly();
+            
             // Create a deep copy of settings so we can cancel changes
             CurrentSettings = new AppSettings
             {
@@ -57,6 +62,24 @@ namespace YomogiTaskBar
 
             UpdateUI();
             _isInitializing = false;
+        }
+
+        private void SetVersionFromAssembly()
+        {
+            try
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var version = assembly.GetName().Version;
+                if (version != null)
+                {
+                    VersionTextBlock.Text = $" v{version}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to get version from assembly: {ex.Message}");
+                VersionTextBlock.Text = " vUnknown";
+            }
         }
 
         private void UpdateUI()

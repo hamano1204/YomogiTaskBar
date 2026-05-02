@@ -8,12 +8,12 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <AssemblyName>YomogiTaskBar</AssemblyName>
     <RootNamespace>YomogiTaskBar</RootNamespace>
     <ApplicationTitle>YomogiTaskBar</ApplicationTitle>
     <Product>YomogiTaskBar</Product>
-    <ApplicationIcon>clover-2.ico</ApplicationIcon>
+    <ApplicationIcon>leaf-2.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

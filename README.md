@@ -7,8 +7,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーです。
 - タスクバーの様に起動中アプリを一覧表示し、アプリの切り替えが可能
 - マウス操作での対象アプリへの切り替え
 - キー入力でのアプリの切り替え
-　- `Win+Esc` で本アプリをフォーカス。上下キーでアプリを選択。`Enter` でアクティブ
-
+　- `Win+Esc` で本アプリをフォーカス。上下キーでアプリを選択。`Enter` でアプリをアクティブ
 
 
 ## Requirements / 要件
@@ -17,8 +16,9 @@ YomogiTaskBarは、Windows用の垂直型タスクバーです。
 - .NET 9.0 Runtime / SDK
 
 
-## インストーラー
-[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases/tag/v0.1.3)
+## Download / ダウンロード
+[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases)
+
 
 ## Build and Run / ビルドと実行
 
@@ -30,6 +30,7 @@ dotnet build
 dotnet run --project YomogiTaskBar.csproj
 ```
 
+
 ## Project Structure / プロジェクト構成
 
 - `YomogiTaskBar.csproj` - プロジェクトファイル / Project file
@@ -37,9 +38,10 @@ dotnet run --project YomogiTaskBar.csproj
 - `MainWindow.xaml` / `MainWindow.xaml.cs` - メインタスクバーのUIと制御 / Main sidebar UI and logic
 - `SettingsWindow.xaml` / `SettingsWindow.xaml.cs` - 設定画面 / Settings window
 - `Controllers/` - AppBar制御とウィンドウ状態管理 / AppBar control and window state management
+- `Converters/` - XAMLコンバーター / XAML converters
 - `ViewModels/` - 表示用データモデル / ViewModels for UI binding
-- `Managers/` - 各種機能管理（テーマ、設定、ホットキー等） / Functional managers (Theme, Settings, Hotkeys, etc.)
-- `Models/` - 設定データ等のモデル定義 / Data models for settings and configurations
+- `Managers/` - 各種機能管理（ウィンドウ、AppBar、設定、ホットキー、テーマ、仮想デスクトップ等） / Functional managers
+- `Models/` - 設定データと定数のモデル定義 / Data models for settings and constants
 - `Themes/` - テーマリソース（Dark/Light） / Theme resources
 - `Utilities/` - ネイティブAPI定義とロギング / Native API definitions and logging
 
@@ -59,4 +61,13 @@ This project is licensed under CC0-1.0.
 
 ## Screenshots / スクリーンショット
 
-![Main Screen](images/screenshot-main.png)
+- 全体
+![全体](images/sc-zentai.png)
+- 表示(シンプル)
+![表示(シンプル)](images/sc-simple.png)
+- 表示(仮想デスクトップ全体)
+![表示(仮想デスクトップすべて)](images/sc-desktop.png)
+- モニタインジケータ
+![モニタインジケータ](images/sc-monitor.png)
+- ダークモード
+![ダークモード](images/sc-dark.png)
