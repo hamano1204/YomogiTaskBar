@@ -67,13 +67,13 @@ https://tabler.io/icons
 
 ## Screenshots / スクリーンショット
 
-- 全体
+### 全体
 ![全体](images/sc-zentai.png)
-- 表示(シンプル)
+### 表示(シンプル)
 ![表示(シンプル)](images/sc-simple.png)
-- 表示(仮想デスクトップ全体)
+### 表示(仮想デスクトップ全体)
 ![表示(仮想デスクトップすべて)](images/sc-desktop.png)
-- モニタインジケータ
+### モニタインジケータ
 ![モニタインジケータ](images/sc-monitor.png)
-- ダークモード
+### ダークモード
 ![ダークモード](images/sc-dark.png)
