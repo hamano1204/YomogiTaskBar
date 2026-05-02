@@ -7,7 +7,7 @@
     <Color x:Key="SecondaryTextColor">#AAAAAA</Color>
     <Color x:Key="BorderColor">#333333</Color>
     <Color x:Key="ItemHoverColor">#3E3E42</Color>
-    <Color x:Key="ItemSeparatorColor">#2D2D30</Color>
+    <Color x:Key="ItemSeparatorColor">#404040</Color>
     <Color x:Key="InputBackgroundColor">#2D2D30</Color>
     <Color x:Key="ButtonIconColor">#000000</Color>
     <Color x:Key="AccentColor">#007ACC</Color>

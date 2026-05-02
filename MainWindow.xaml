@@ -288,7 +288,7 @@
                                 </Grid>
                             </Grid>
                             <!-- Separator line (for simple layout) -->
-                            <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="0,5,10,5" HorizontalAlignment="Right" Visibility="Collapsed"/>
+                            <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5,10,5" HorizontalAlignment="Stretch" Visibility="Collapsed"/>
                             <!-- Separator with desktop name (for all desktops layout) -->
                             <Border x:Name="DesktopNameBorder" Background="{DynamicResource HeaderBackgroundBrush}" Margin="0,8,0,-8" Padding="12,6" CornerRadius="4" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
