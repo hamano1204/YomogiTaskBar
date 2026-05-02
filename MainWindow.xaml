@@ -181,33 +181,36 @@
                         <Grid Margin="5,11" Background="Transparent" x:Name="RootGrid">
                             <Grid x:Name="ContentGrid">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0">
+                                
+                                <!-- Left Monitor Indicator -->
+                                <Border x:Name="MonitorIndicatorLeft" 
+                                        Grid.Column="0"
+                                        Width="3" 
+                                        CornerRadius="1,0,0,1" 
+                                        Margin="0,-11,4,-11"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Stretch"
+                                        Background="#AA000000"
+                                        Visibility="{Binding ShouldShowLeftIndicator, Converter={StaticResource BoolToVisibilityConverter}}"
+                                        AutomationProperties.Name="モニターインジケーター（左側）" 
+                                        AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
+                                
+                                <Grid Grid.Column="1">
                                     <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
                                            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="アプリケーションアイコン"/>
                                 </Grid>
 
                                 <!-- Title + Floating button overlay (same column) -->
-                                <Grid Grid.Column="1">
+                                <Grid Grid.Column="2">
                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
                                                Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
                                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
-                                    
-                                    <!-- Left Monitor Indicator -->
-                                    <Border x:Name="MonitorIndicatorLeft" 
-                                            Width="3" 
-                                            CornerRadius="1,0,0,1" 
-                                            Margin="0,-11,4,-11"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Stretch"
-                                            Background="#AA000000"
-                                            Visibility="{Binding ShouldShowLeftIndicator, Converter={StaticResource BoolToVisibilityConverter}}"
-                                            AutomationProperties.Name="モニターインジケーター（左側）" 
-                                            AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
 
                                     <!-- Right Monitor Indicator (original) -->
                                     <Border x:Name="MonitorIndicatorRight" 
