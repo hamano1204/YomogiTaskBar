@@ -197,16 +197,28 @@
                                                Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
                                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
                                     
-                                    <!-- Monitor Indicator on right side of app name -->
-                                    <Border x:Name="MonitorIndicator" 
+                                    <!-- Left Monitor Indicator -->
+                                    <Border x:Name="MonitorIndicatorLeft" 
+                                            Width="3" 
+                                            CornerRadius="1,0,0,1" 
+                                            Margin="0,-11,4,-11"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Stretch"
+                                            Background="#AA000000"
+                                            Visibility="{Binding ShouldShowLeftIndicator, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            AutomationProperties.Name="モニターインジケーター（左側）" 
+                                            AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
+
+                                    <!-- Right Monitor Indicator (original) -->
+                                    <Border x:Name="MonitorIndicatorRight" 
                                             Width="3" 
                                             CornerRadius="0,1,1,0" 
                                             Margin="4,-11,0,-11"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Stretch"
                                             Background="#AA000000"
-                                            Visibility="Collapsed"
-                                            AutomationProperties.Name="モニターインジケーター" 
+                                            Visibility="{Binding ShouldShowRightIndicator, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            AutomationProperties.Name="モニターインジケーター（右側）" 
                                             AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
 
                                     <!-- Hover buttons overlay: buttons appear on top of title -->
@@ -321,31 +333,31 @@
                                 <Setter TargetName="ItemCloseBtn" Property="Opacity" Value="2"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Collapsed"/>
+                                <!-- MonitorIndex 0 items will have visibility controlled by UpdateMonitorIndicatorVisibility method -->
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="1">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#0078D7"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#0078D7"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#0078D7"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="2">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#FF8C00"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#FF8C00"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#FF8C00"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="3">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#007ACC"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#007ACC"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#007ACC"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="4">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#D83B01"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#D83B01"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#D83B01"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="5">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#00B4FF"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#00B4FF"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#00B4FF"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="6">
-                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#E81123"/>
-                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="MonitorIndicatorLeft" Property="Background" Value="#E81123"/>
+                                <Setter TargetName="MonitorIndicatorRight" Property="Background" Value="#E81123"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>

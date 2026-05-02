@@ -360,6 +360,9 @@ namespace YomogiTaskBar
 
             // Update current desktop name
             CurrentDesktopText.Text = VirtualDesktopHelper.GetCurrentDesktopName();
+
+            // Update monitor indicator visibility based on settings
+            UpdateMonitorIndicatorVisibility();
         }
 
         private void RegisterGlobalHotkey()
@@ -515,6 +518,9 @@ namespace YomogiTaskBar
                     _currentLayoutMode = _settings.LayoutMode;
                     RefreshWindowList();
                 }
+                
+                // Refresh window list to apply monitor indicator changes
+                RefreshWindowList();
             }
             else
             {
@@ -789,6 +795,67 @@ namespace YomogiTaskBar
             {
                 _appBarController?.UpdateWidth((int)_tempWidth);
             }
+        }
+
+        private int GetMonitorCount()
+        {
+            return Forms.Screen.AllScreens.Length;
+        }
+
+        private void UpdateMonitorIndicatorVisibility()
+        {
+            int monitorCount = GetMonitorCount();
+            bool shouldShowIndicators = monitorCount > 1 && _settings.MonitorIndicatorDisplay != MonitorIndicatorDisplay.None;
+            
+            Logger.LogDebug($"UpdateMonitorIndicatorVisibility: monitorCount={monitorCount}, shouldShow={shouldShowIndicators}, setting={_settings.MonitorIndicatorDisplay}, items={WindowsList.Items.Count}", "MainWindow");
+            
+            // Update visibility for all window items
+            for (int i = 0; i < WindowsList.Items.Count; i++)
+            {
+                var item = WindowsList.Items[i] as WindowItemViewModel;
+                if (item != null)
+                {
+                    // Reset both indicators
+                    item.ShouldShowLeftIndicator = false;
+                    item.ShouldShowRightIndicator = false;
+                    
+                    // Show indicators only if conditions are met
+                    if (shouldShowIndicators && item.MonitorIndex > 0)
+                    {
+                        if (_settings.MonitorIndicatorDisplay == MonitorIndicatorDisplay.Left)
+                        {
+                            item.ShouldShowLeftIndicator = true;
+                            Logger.LogDebug($"Showing left indicator for {item.Title}", "MainWindow");
+                        }
+                        else // Right
+                        {
+                            item.ShouldShowRightIndicator = true;
+                            Logger.LogDebug($"Showing right indicator for {item.Title}", "MainWindow");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static T FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
+        {
+            if (parent == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T childAsT && childAsT is FrameworkElement frameworkElement && frameworkElement.Name == childName)
+                {
+                    return childAsT;
+                }
+
+                var childOfChild = FindChild<T>(child, childName);
+                if (childOfChild != null)
+                {
+                    return childOfChild;
+                }
+            }
+            return null;
         }
 
     }

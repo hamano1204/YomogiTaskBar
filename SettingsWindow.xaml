@@ -166,7 +166,7 @@
                                 <ComboBoxItem Content="ダークモード" Tag="Dark"/>
                             </ComboBox>
                             <TextBlock Text="アプリ一覧レイアウト" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,8"/>
-                            <ComboBox x:Name="LayoutModeComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="LayoutModeComboBox_SelectionChanged">
+                            <ComboBox x:Name="LayoutModeComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="LayoutModeComboBox_SelectionChanged" Margin="0,0,0,16">
                                 <ComboBox.ItemContainerStyle>
                                     <Style TargetType="ComboBoxItem">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -177,6 +177,20 @@
                                 </ComboBox.ItemContainerStyle>
                                 <ComboBoxItem Content="シンプルレイアウト（現在のデスクトップのみ）" Tag="Simple"/>
                                 <ComboBoxItem Content="デスクトップをすべて表示" Tag="AllDesktops"/>
+                            </ComboBox>
+                            <TextBlock Text="モニターインジケーター" FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,8"/>
+                            <ComboBox x:Name="MonitorIndicatorComboBox" Style="{StaticResource ModernComboBox}" SelectionChanged="MonitorIndicatorComboBox_SelectionChanged">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                        <Setter Property="Padding" Value="10,6"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                    </Style>
+                                </ComboBox.ItemContainerStyle>
+                                <ComboBoxItem Content="なし" Tag="None"/>
+                                <ComboBoxItem Content="左側に表示" Tag="Left"/>
+                                <ComboBoxItem Content="右側に表示" Tag="Right"/>
                             </ComboBox>
                         </StackPanel>
                     </Border>

@@ -10,6 +10,13 @@ namespace YomogiTaskBar.Models
         AllDesktops     // デスクトップをすべて表示
     }
 
+    public enum MonitorIndicatorDisplay
+    {
+        None,           // 表示しない
+        Left,           // 左側に表示
+        Right           // 右側に表示（現在の構成）
+    }
+
     public class ShortcutConfig
     {
         public Key Key { get; set; }
@@ -82,6 +89,7 @@ namespace YomogiTaskBar.Models
         public string ThemeMode { get; set; } = "System"; // Light, Dark, System
         public bool LaunchOnStartup { get; set; } = false;
         public LayoutMode LayoutMode { get; set; } = LayoutMode.Simple; // アプリ一覧のレイアウトモード
+        public MonitorIndicatorDisplay MonitorIndicatorDisplay { get; set; } = MonitorIndicatorDisplay.Right; // モニターインジケーターの表示設定
         public ShortcutConfig GlobalActivate { get; set; } = new ShortcutConfig { Key = Key.Escape, Modifiers = ModifierKeys.Windows };
         public ShortcutConfig Minimize { get; set; } = new ShortcutConfig { Key = Key.J, Modifiers = ModifierKeys.Control };
         public ShortcutConfig ToggleMaximize { get; set; } = new ShortcutConfig { Key = Key.K, Modifiers = ModifierKeys.Control };

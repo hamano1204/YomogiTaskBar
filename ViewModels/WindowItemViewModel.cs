@@ -19,6 +19,8 @@ namespace YomogiTaskBar.ViewModels
         private Guid _desktopId;
         private string _desktopName = string.Empty;
         private bool _isCurrentDesktop;
+        private bool _shouldShowLeftIndicator;
+        private bool _shouldShowRightIndicator;
 
         public IntPtr Handle
         {
@@ -90,6 +92,18 @@ namespace YomogiTaskBar.ViewModels
         {
             get => _isCurrentDesktop;
             set { if (_isCurrentDesktop != value) { _isCurrentDesktop = value; OnPropertyChanged(); } }
+        }
+
+        public bool ShouldShowLeftIndicator
+        {
+            get => _shouldShowLeftIndicator;
+            set { if (_shouldShowLeftIndicator != value) { _shouldShowLeftIndicator = value; OnPropertyChanged(); } }
+        }
+
+        public bool ShouldShowRightIndicator
+        {
+            get => _shouldShowRightIndicator;
+            set { if (_shouldShowRightIndicator != value) { _shouldShowRightIndicator = value; OnPropertyChanged(); } }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

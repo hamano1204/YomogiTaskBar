@@ -46,6 +46,7 @@ namespace YomogiTaskBar
                 ThemeMode = settings.ThemeMode,
                 LaunchOnStartup = settings.LaunchOnStartup,
                 LayoutMode = settings.LayoutMode,
+                MonitorIndicatorDisplay = settings.MonitorIndicatorDisplay,
                 GlobalActivate = new ShortcutConfig { Key = settings.GlobalActivate.Key, Modifiers = settings.GlobalActivate.Modifiers },
                 Minimize = new ShortcutConfig { Key = settings.Minimize.Key, Modifiers = settings.Minimize.Modifiers },
                 ToggleMaximize = new ShortcutConfig { Key = settings.ToggleMaximize.Key, Modifiers = settings.ToggleMaximize.Modifiers },
@@ -84,6 +85,16 @@ namespace YomogiTaskBar
                 if (item.Tag.ToString() == CurrentSettings.LayoutMode.ToString())
                 {
                     LayoutModeComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+
+            // Initialize MonitorIndicator ComboBox
+            foreach (ComboBoxItem item in MonitorIndicatorComboBox.Items)
+            {
+                if (item.Tag.ToString() == CurrentSettings.MonitorIndicatorDisplay.ToString())
+                {
+                    MonitorIndicatorComboBox.SelectedItem = item;
                     break;
                 }
             }
@@ -213,6 +224,15 @@ namespace YomogiTaskBar
             if (LayoutModeComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
                 CurrentSettings.LayoutMode = Enum.Parse<LayoutMode>(item.Tag.ToString() ?? "Simple");
+            }
+        }
+
+        private void MonitorIndicatorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing) return;
+            if (MonitorIndicatorComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                CurrentSettings.MonitorIndicatorDisplay = Enum.Parse<MonitorIndicatorDisplay>(item.Tag.ToString() ?? "Right");
             }
         }
     }
