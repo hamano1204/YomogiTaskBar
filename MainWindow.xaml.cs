@@ -31,6 +31,21 @@ namespace YomogiTaskBar
         private AppSettings _settings;
         private DispatcherTimer? _autoHideTimer;
         private LayoutMode _currentLayoutMode;
+        private bool _isExternalAppActive = false;
+        private bool _isUserNavigating = false;
+        private bool _selectionLocked = false;
+        private bool _refreshDisabled = false;
+        private bool _isWinEscActive = false; // Flag to prevent any refresh during Win+Esc
+        private DispatcherTimer? _navigationTimer;
+
+        /// <summary>
+        /// Checks if the currently focused window is an external application (not this taskbar)
+        /// </summary>
+        private bool IsExternalAppFocused()
+        {
+            IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
+            return foregroundWindow != _windowHandle && foregroundWindow != IntPtr.Zero;
+        }
 
         public MainWindow()
         {
@@ -94,12 +109,73 @@ namespace YomogiTaskBar
                 // Set up refresh timer
                 _timer = new DispatcherTimer();
                 _timer.Interval = TimeSpan.FromSeconds(WindowConstants.RefreshIntervalSeconds);
-                _timer.Tick += (s, ev) => 
+                _timer.Tick += (s, ev) =>
                 {
+                    Logger.LogDebug("Timer tick: calling RefreshWindowList", "MainWindow");
                     VirtualDesktopHelper.MoveToCurrentDesktop(_windowHandle);
                     RefreshWindowList();
                 };
                 _timer.Start();
+                Logger.LogDebug("Refresh timer started", "MainWindow");
+
+                // Set up focus event handlers to track when taskbar gets focus
+                this.GotFocus += (s, e) =>
+                {
+                    Logger.LogDebug("MainWindow GotFocus", "MainWindow");
+                    _isExternalAppActive = false;
+                    // Don't clear navigation flags during navigation
+                    if (!_isUserNavigating)
+                    {
+                        _selectionLocked = false;
+                        _refreshDisabled = false;
+                    }
+                };
+                this.Activated += (s, e) =>
+                {
+                    Logger.LogDebug("MainWindow Activated", "MainWindow");
+                    _isExternalAppActive = false;
+                    // Don't clear navigation flags during navigation
+                    if (!_isUserNavigating)
+                    {
+                        _selectionLocked = false;
+                        _refreshDisabled = false;
+                    }
+                };
+                WindowsList.GotFocus += (s, e) =>
+                {
+                    Logger.LogDebug("WindowsList GotFocus", "MainWindow");
+                    _isExternalAppActive = false;
+                    // Don't clear navigation flags during navigation
+                    if (!_isUserNavigating)
+                    {
+                        _selectionLocked = false;
+                        _refreshDisabled = false;
+                    }
+                };
+                WindowsList.LostFocus += (s, e) =>
+                {
+                    Logger.LogDebug("WindowsList LostFocus", "MainWindow");
+                    // Don't clear selection if we're in navigation mode
+                    if (_isUserNavigating)
+                    {
+                        Logger.LogDebug("Maintaining selection during navigation despite focus loss", "MainWindow");
+                    }
+                };
+
+                // Set up navigation timer to clear user navigation flag after inactivity
+                _navigationTimer = new DispatcherTimer();
+                _navigationTimer.Interval = TimeSpan.FromSeconds(3);
+                _navigationTimer.Tick += (s, e) =>
+                {
+                    Logger.LogDebug("Navigation timer tick: clearing navigation flags and restarting refresh timer", "MainWindow");
+                    _isUserNavigating = false;
+                    _selectionLocked = false;
+                    _refreshDisabled = false;
+                    _timer?.Start(); // Restart the refresh timer
+                    _navigationTimer?.Stop(); // Stop the navigation timer after use
+                };
+                // Don't start navigation timer immediately - wait for first navigation key press
+                Logger.LogDebug("Navigation timer initialized but not started", "MainWindow");
 
                 // Set up NotifyIcon for System Tray
                 SetupNotifyIcon();
@@ -126,7 +202,11 @@ namespace YomogiTaskBar
                 
                 ComponentDispatcher.ThreadPreprocessMessage -= ComponentDispatcher_ThreadPreprocessMessage;
                 HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
-                
+
+                // Cleanup timers
+                _navigationTimer?.Stop();
+                _navigationTimer = null;
+
                 // Cleanup controllers
                 _appBarController?.Dispose();
                 
@@ -197,13 +277,85 @@ namespace YomogiTaskBar
 
         private void RefreshWindowList()
         {
+            Logger.LogDebug("RefreshWindowList called", "MainWindow");
+            Logger.LogDebug($"_refreshDisabled={_refreshDisabled}, _isUserNavigating={_isUserNavigating}, _isExternalAppActive={_isExternalAppActive}, _isWinEscActive={_isWinEscActive}", "MainWindow");
+
+            // Skip refresh if Win+Esc is active (complete prevention)
+            if (_isWinEscActive)
+            {
+                Logger.LogDebug("RefreshWindowList skipped: Win+Esc active", "MainWindow");
+                return;
+            }
+
+            // Skip refresh if refresh is disabled during navigation
+            if (_refreshDisabled)
+            {
+                Logger.LogDebug("RefreshWindowList skipped: refresh disabled", "MainWindow");
+                return;
+            }
+
+            // Skip refresh if user is actively navigating with keyboard
+            if (_isUserNavigating)
+            {
+                Logger.LogDebug("RefreshWindowList skipped: user navigating", "MainWindow");
+                return;
+            }
+
+            // Skip refresh if external app is active and has focus (to maintain Win+Esc selection)
+            if (_isExternalAppActive && IsExternalAppFocused())
+            {
+                Logger.LogDebug("RefreshWindowList skipped: external app active", "MainWindow");
+                return;
+            }
+
             var windows = _windowManager.GetRunningWindows(_currentLayoutMode);
+
+            // Preserve selected item, index, and focus state before clearing
+            WindowItemViewModel? selectedItem = WindowsList.SelectedItem as WindowItemViewModel;
+            IntPtr? selectedHandle = selectedItem?.Handle;
+            int selectedIndex = WindowsList.SelectedIndex;
+            bool hasFocus = WindowsList.IsFocused;
+            Logger.LogDebug($"Preserving selection: Handle={selectedHandle}, Index={selectedIndex}, Title={selectedItem?.Title}, HasFocus={hasFocus}", "MainWindow");
 
             // Clear and rebuild the list (simpler approach for multiple separators)
             _windows.Clear();
             foreach (var window in windows)
             {
                 _windows.Add(window);
+            }
+
+            Logger.LogDebug($"List rebuilt: {_windows.Count} items", "MainWindow");
+
+            // Restore selected item - try by handle first, then by index as fallback
+            if (selectedHandle.HasValue)
+            {
+                var restoredItem = _windows.FirstOrDefault(w => w.Handle == selectedHandle.Value);
+                if (restoredItem != null)
+                {
+                    Logger.LogDebug($"Restoring selection by handle: {restoredItem.Title}", "MainWindow");
+                    WindowsList.SelectedItem = restoredItem;
+                }
+                else if (selectedIndex >= 0 && selectedIndex < _windows.Count)
+                {
+                    // Fallback to index-based restoration
+                    Logger.LogDebug($"Handle not found, restoring by index: {selectedIndex}", "MainWindow");
+                    WindowsList.SelectedIndex = selectedIndex;
+                }
+                else
+                {
+                    Logger.LogDebug("Selection restoration failed: handle not found and index out of range", "MainWindow");
+                }
+            }
+            else
+            {
+                Logger.LogDebug("No selection to restore", "MainWindow");
+            }
+
+            // Restore focus if it was lost during refresh
+            if (hasFocus && !WindowsList.IsFocused)
+            {
+                Logger.LogDebug("Restoring focus to WindowsList", "MainWindow");
+                WindowsList.Focus();
             }
 
             // Update current desktop name
@@ -239,6 +391,8 @@ namespace YomogiTaskBar
             if (_appBarController?.IsHidden == true) _appBarController.ShowWindow();
 
             this.Activate();
+            _isWinEscActive = true; // Set Win+Esc flag to prevent refresh
+            Logger.LogDebug("Win+Esc activated: setting flag to prevent refresh", "MainWindow");
             RefreshWindowList();
 
             Dispatcher.BeginInvoke(new Action(() =>
@@ -274,6 +428,14 @@ namespace YomogiTaskBar
         {
             if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
             {
+                Logger.LogDebug($"ActivateSelectedItem: {selected.Title}", "MainWindow");
+                _isExternalAppActive = true; // Set flag to prevent refresh interruptions
+                _isWinEscActive = false; // Clear Win+Esc flag on activation
+                _isUserNavigating = false; // Clear navigation flag on activation
+                _selectionLocked = false; // Clear selection lock on activation
+                _refreshDisabled = false; // Clear refresh disabled flag on activation
+                _timer?.Start(); // Restart the refresh timer
+                Logger.LogDebug("Refresh timer restarted after activation", "MainWindow");
                 _windowManager.ActivateWindow(selected.Handle);
                 if (_appBarController?.IsPinned == false) _appBarController.HideWindow();
             }
@@ -364,6 +526,13 @@ namespace YomogiTaskBar
 
         private void WindowsList_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            Logger.LogDebug("MouseLeftButtonUp: clearing navigation flags and restarting timer", "MainWindow");
+            // Clear navigation flag on mouse interaction
+            _isUserNavigating = false;
+            _selectionLocked = false;
+            _refreshDisabled = false;
+            _timer?.Start(); // Restart the refresh timer
+
             // Only activate if we actually clicked an item
             var dependencyObject = e.OriginalSource as DependencyObject;
             while (dependencyObject != null && !(dependencyObject is ListBoxItem))
@@ -379,6 +548,30 @@ namespace YomogiTaskBar
 
         private void WindowsList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            // Set navigation flag for arrow keys and navigation keys
+            if (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right ||
+                e.Key == Key.PageUp || e.Key == Key.PageDown || e.Key == Key.Home || e.Key == Key.End)
+            {
+                Logger.LogDebug($"Navigation key pressed: {e.Key}", "MainWindow");
+                if (!_isUserNavigating)
+                {
+                    Logger.LogDebug("Starting navigation: setting flags and stopping timer", "MainWindow");
+                    _isUserNavigating = true;
+                    _selectionLocked = true;
+                    _refreshDisabled = true;
+                    _timer?.Stop(); // Stop the refresh timer during navigation
+                    _navigationTimer?.Start(); // Start navigation timer
+                    Logger.LogDebug("Navigation started: timer stopped, navigation timer started", "MainWindow");
+                }
+                else
+                {
+                    // Reset navigation timer for continued navigation
+                    Logger.LogDebug("Continuing navigation: resetting navigation timer", "MainWindow");
+                    _navigationTimer?.Stop();
+                    _navigationTimer?.Start();
+                }
+            }
+
             if (e.Key == Key.Enter)
             {
                 ActivateSelectedItem();
@@ -386,8 +579,22 @@ namespace YomogiTaskBar
             }
             else if (e.Key == Key.Escape)
             {
-                WindowsList.SelectedItem = null;
-                e.Handled = true;
+                // Check if Win key is pressed (Win+Esc)
+                if (Keyboard.Modifiers == ModifierKeys.Windows)
+                {
+                    // Win+Esc: maintain selection and focus on the window
+                    if (WindowsList.SelectedItem is WindowItemViewModel selected && !selected.IsSeparator)
+                    {
+                        ActivateSelectedItem();
+                    }
+                    e.Handled = true;
+                }
+                else
+                {
+                    // Just Esc: clear selection
+                    WindowsList.SelectedItem = null;
+                    e.Handled = true;
+                }
             }
             else
             {
@@ -455,7 +662,18 @@ namespace YomogiTaskBar
 
         private void WindowsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Logic removed - activation now happens on MouseUp or Enter
+            Logger.LogDebug($"SelectionChanged: Added={e.AddedItems.Count}, Removed={e.RemovedItems.Count}, Locked={_selectionLocked}", "MainWindow");
+            
+            // Prevent selection changes when selection is locked during navigation
+            if (_selectionLocked && e.RemovedItems.Count > 0)
+            {
+                Logger.LogDebug("Selection locked: restoring previous selection", "MainWindow");
+                // Restore the previous selection
+                if (e.RemovedItems[0] is WindowItemViewModel removedItem)
+                {
+                    WindowsList.SelectedItem = removedItem;
+                }
+            }
         }
 
         private void CloseItemButton_Click(object sender, RoutedEventArgs e)
