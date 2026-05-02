@@ -178,23 +178,22 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid Margin="5,11" Background="Transparent" x:Name="RootGrid">
-                            <Grid x:Name="ContentGrid">
+                            <Border x:Name="MonitorIndicator" 
+                                    Width="3" 
+                                    CornerRadius="1,0,0,1" 
+                                    Margin="0,0,0,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Stretch"
+                                    Background="#AA000000"
+                                    Visibility="Collapsed"
+                                    AutomationProperties.Name="モニターインジケーター" 
+                                    AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
+                            <Grid x:Name="ContentGrid" Margin="5,0,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border x:Name="MonitorIndicator" 
-                                        Width="3" 
-                                        CornerRadius="1,0,0,1" 
-                                        Margin="0,0,2,0"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Stretch"
-                                        Background="#AA000000"
-                                        Visibility="Collapsed"
-                                        AutomationProperties.Name="モニターインジケーター" 
-                                        AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
-                                <Grid Grid.Column="1">
+                                <Grid Grid.Column="0">
                                     <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
                                            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="アプリケーションアイコン"/>
                                 </Grid>
