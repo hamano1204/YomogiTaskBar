@@ -212,6 +212,7 @@ namespace YomogiTaskBar.Managers
             // Group by virtual desktop and insert separators
             var result = new List<WindowItemViewModel>();
             Guid? lastDesktopId = null;
+            var currentDesktopId = desktops.FirstOrDefault(d => d.IsCurrent)?.Id ?? Guid.Empty;
 
             foreach (var window in sortedWindows)
             {
@@ -222,7 +223,8 @@ namespace YomogiTaskBar.Managers
                     {
                         IsSeparator = true,
                         IsDesktopSeparator = true,
-                        Title = window.DesktopName
+                        Title = window.DesktopName,
+                        IsCurrentDesktop = window.DesktopId == currentDesktopId
                     });
                 }
 
@@ -233,7 +235,8 @@ namespace YomogiTaskBar.Managers
                     {
                         IsSeparator = true,
                         IsDesktopSeparator = true,
-                        Title = window.DesktopName
+                        Title = window.DesktopName,
+                        IsCurrentDesktop = window.DesktopId == currentDesktopId
                     });
                 }
 

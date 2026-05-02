@@ -18,6 +18,7 @@ namespace YomogiTaskBar.ViewModels
         private bool _isActive;
         private Guid _desktopId;
         private string _desktopName = string.Empty;
+        private bool _isCurrentDesktop;
 
         public IntPtr Handle
         {
@@ -83,6 +84,12 @@ namespace YomogiTaskBar.ViewModels
         {
             get => _desktopName;
             set { if (_desktopName != value) { _desktopName = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsCurrentDesktop
+        {
+            get => _isCurrentDesktop;
+            set { if (_isCurrentDesktop != value) { _isCurrentDesktop = value; OnPropertyChanged(); } }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

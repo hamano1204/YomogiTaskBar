@@ -268,7 +268,15 @@
                             <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
                             <!-- Separator with desktop name (for all desktops layout) -->
                             <Border x:Name="DesktopNameBorder" Background="{DynamicResource HeaderBackgroundBrush}" Margin="0,8,0,4" Padding="12,6" CornerRadius="4" Visibility="Collapsed">
-                                <TextBlock Text="{Binding Title}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="11" FontWeight="SemiBold"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="11" FontWeight="SemiBold"/>
+                                    <Ellipse x:Name="CurrentDesktopIndicator" 
+                                             Width="6" Height="6" 
+                                             Fill="{DynamicResource AccentBrush}" 
+                                             VerticalAlignment="Center" 
+                                             Margin="8,0,0,0"
+                                             Visibility="Collapsed"/>
+                                </StackPanel>
                             </Border>
                         </Grid>
                         <DataTemplate.Triggers>
@@ -295,6 +303,9 @@
                                 <Setter TargetName="SimpleSeparatorBorder" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="DesktopNameBorder" Property="Visibility" Value="Visible"/>
                             </MultiDataTrigger>
+                            <DataTrigger Binding="{Binding IsCurrentDesktop}" Value="True">
+                                <Setter TargetName="CurrentDesktopIndicator" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                                 <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
                                 <Setter TargetName="ItemMinRestoreBtn" Property="Content" Value="&#x2191;"/>
