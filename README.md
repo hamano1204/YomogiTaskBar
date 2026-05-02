@@ -58,6 +58,12 @@ This project is licensed under CC0-1.0.
 
 このプロジェクトはCC0-1.0の下でライセンスされています。
 
+ただしアイコンについては以下サイトのものを利用しており、別ライセンス(MIT)になります。
+
+This project uses icons from Tabler Icons (MIT License).
+https://tabler.io/icons
+
+
 
 ## Screenshots / スクリーンショット
 
