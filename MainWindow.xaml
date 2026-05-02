@@ -178,20 +178,11 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Grid Margin="5,11" Background="Transparent" x:Name="RootGrid">
-                            <Border x:Name="MonitorIndicator" 
-                                    Width="3" 
-                                    CornerRadius="1,0,0,1" 
-                                    Margin="0,0,0,0"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Stretch"
-                                    Background="#AA000000"
-                                    Visibility="Collapsed"
-                                    AutomationProperties.Name="モニターインジケーター" 
-                                    AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
-                            <Grid x:Name="ContentGrid" Margin="5,0,0,0">
+                            <Grid x:Name="ContentGrid">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid Grid.Column="0">
                                     <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
@@ -199,11 +190,23 @@
                                 </Grid>
 
                                 <!-- Title + Floating button overlay (same column) -->
-                                <Grid Grid.Column="2">
+                                <Grid Grid.Column="1">
                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
                                                Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
                                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
+                                    
+                                    <!-- Monitor Indicator on right side of app name -->
+                                    <Border x:Name="MonitorIndicator" 
+                                            Width="3" 
+                                            CornerRadius="0,1,1,0" 
+                                            Margin="4,-11,0,-11"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Stretch"
+                                            Background="#AA000000"
+                                            Visibility="Collapsed"
+                                            AutomationProperties.Name="モニターインジケーター" 
+                                            AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
 
                                     <!-- Hover buttons overlay: buttons appear on top of title -->
                                     <Border x:Name="HoverButtonOverlay" HorizontalAlignment="Right" VerticalAlignment="Stretch"
@@ -269,7 +272,7 @@
                                 </Grid>
                             </Grid>
                             <!-- Separator line (for simple layout) -->
-                            <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="10,5" Visibility="Collapsed"/>
+                            <Border x:Name="SimpleSeparatorBorder" Height="1" Background="{DynamicResource ItemSeparatorBrush}" Margin="0,5,10,5" HorizontalAlignment="Right" Visibility="Collapsed"/>
                             <!-- Separator with desktop name (for all desktops layout) -->
                             <Border x:Name="DesktopNameBorder" Background="{DynamicResource HeaderBackgroundBrush}" Margin="0,8,0,4" Padding="12,6" CornerRadius="4" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
