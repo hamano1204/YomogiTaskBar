@@ -164,14 +164,14 @@ namespace YomogiTaskBar.Managers
 
                             // Get virtual desktop information
                             Guid desktopId = Guid.Empty;
-                            string desktopName = "Unknown";
+                            string desktopName = "すべてのデスクトップで表示";
                             if (vdManager != null)
                             {
                                 try
                                 {
                                     vdManager.GetWindowDesktopId(hWnd, out desktopId);
                                     var desktopInfo = desktops.FirstOrDefault(d => d.Id == desktopId);
-                                    desktopName = desktopInfo?.Name ?? "Unknown";
+                                    desktopName = desktopInfo?.Name ?? "すべてのデスクトップで表示";
                                 }
                                 catch { }
                             }
@@ -211,37 +211,40 @@ namespace YomogiTaskBar.Managers
 
             // Group by virtual desktop and insert separators
             var result = new List<WindowItemViewModel>();
-            Guid? lastDesktopId = null;
+            string? lastDesktopName = null;
             var currentDesktopId = desktops.FirstOrDefault(d => d.IsCurrent)?.Id ?? Guid.Empty;
 
             foreach (var window in sortedWindows)
             {
+                // For Unknown windows, use desktop name as grouping key
+                string currentDesktopName = window.DesktopName;
+                
                 // Insert separator when desktop changes
-                if (lastDesktopId != null && window.DesktopId != lastDesktopId)
+                if (lastDesktopName != null && currentDesktopName != lastDesktopName)
                 {
                     result.Add(new WindowItemViewModel
                     {
                         IsSeparator = true,
                         IsDesktopSeparator = true,
-                        Title = window.DesktopName,
+                        Title = currentDesktopName,
                         IsCurrentDesktop = window.DesktopId == currentDesktopId
                     });
                 }
 
                 // Insert separator for first desktop
-                if (lastDesktopId == null)
+                if (lastDesktopName == null)
                 {
                     result.Add(new WindowItemViewModel
                     {
                         IsSeparator = true,
                         IsDesktopSeparator = true,
-                        Title = window.DesktopName,
+                        Title = currentDesktopName,
                         IsCurrentDesktop = window.DesktopId == currentDesktopId
                     });
                 }
 
                 result.Add(window);
-                lastDesktopId = window.DesktopId;
+                lastDesktopName = currentDesktopName;
             }
 
             return result;
