@@ -180,22 +180,27 @@
                         <Grid Margin="5,11" Background="Transparent" x:Name="RootGrid">
                             <Grid x:Name="ContentGrid">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="32"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid Grid.Column="0">
+                                <Border x:Name="MonitorIndicator" 
+                                        Width="3" 
+                                        CornerRadius="1,0,0,1" 
+                                        Margin="0,0,2,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Stretch"
+                                        Background="#AA000000"
+                                        Visibility="Collapsed"
+                                        AutomationProperties.Name="モニターインジケーター" 
+                                        AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
+                                <Grid Grid.Column="1">
                                     <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
                                            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="アプリケーションアイコン"/>
-                                    <Border x:Name="MonitorBadge" Background="#AA000000" CornerRadius="7" Width="14" Height="14" 
-                                            HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2"
-                                            AutomationProperties.Name="モニターバッジ" AutomationProperties.HelpText="ウィンドウが表示されているモニター番号">
-                                        <TextBlock Text="{Binding MonitorIndex}" Foreground="White" FontSize="9" 
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
-                                    </Border>
                                 </Grid>
 
                                 <!-- Title + Floating button overlay (same column) -->
-                                <Grid Grid.Column="1">
+                                <Grid Grid.Column="2">
                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
                                                Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
@@ -285,7 +290,6 @@
                             </Trigger>
                             <DataTrigger Binding="{Binding IsSeparator}" Value="True">
                                 <Setter TargetName="ContentGrid" Property="Visibility" Value="Collapsed"/>
-                                <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
@@ -314,19 +318,31 @@
                                 <Setter TargetName="ItemCloseBtn" Property="Opacity" Value="2"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
-                                <Setter TargetName="MonitorBadge" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Collapsed"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="1">
-                                <Setter TargetName="MonitorBadge" Property="Background" Value="#0078D7"/> <!-- Windows Blue -->
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#0078D7"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="2">
-                                <Setter TargetName="MonitorBadge" Property="Background" Value="#107C10"/> <!-- Windows Green -->
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#FF8C00"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="3">
-                                <Setter TargetName="MonitorBadge" Property="Background" Value="#D83B01"/> <!-- Windows Orange/Red -->
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#007ACC"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="4">
-                                <Setter TargetName="MonitorBadge" Property="Background" Value="#5C2D91"/> <!-- Windows Purple -->
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#D83B01"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding MonitorIndex}" Value="5">
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#00B4FF"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding MonitorIndex}" Value="6">
+                                <Setter TargetName="MonitorIndicator" Property="Background" Value="#E81123"/>
+                                <Setter TargetName="MonitorIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
