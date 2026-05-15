@@ -255,14 +255,12 @@ namespace YomogiTaskBar
                     ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
                     WindowsList.Margin = new Thickness(0, 0, 6, 0);
                     HeaderBorder.Padding = new Thickness(10, 10, 16, 10);
-                    FooterBorder.Padding = new Thickness(10, 10, 16, 10);
                 }
                 else
                 {
                     ResizeThumb.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
                     WindowsList.Margin = new Thickness(6, 0, 0, 0);
                     HeaderBorder.Padding = new Thickness(16, 10, 10, 10);
-                    FooterBorder.Padding = new Thickness(16, 10, 10, 10);
                 }
                 
                 Logger.LogDebug($"UI updated for edge: {edge}", "MainWindow");
@@ -356,9 +354,6 @@ namespace YomogiTaskBar
                 WindowsList.Focus();
             }
 
-            // Update current desktop name
-            CurrentDesktopText.Text = VirtualDesktopHelper.GetCurrentDesktopName();
-
             // Update monitor indicator visibility based on settings
             UpdateMonitorIndicatorVisibility();
         }
@@ -442,57 +437,6 @@ namespace YomogiTaskBar
             }
         }
 
-        private void DesktopFooter_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            var desktops = VirtualDesktopHelper.GetDesktops();
-            DesktopContextMenu.Items.Clear();
-
-            foreach (var desktop in desktops)
-            {
-                var item = new System.Windows.Controls.MenuItem
-                {
-                    Header = desktop.Name,
-                    IsCheckable = true,
-                    IsChecked = desktop.IsCurrent,
-                    Tag = desktop.Id
-                };
-                item.Click += async (s, args) =>
-                {
-                    if (s is System.Windows.Controls.MenuItem menuItem && menuItem.Tag is Guid id)
-                    {
-                        await VirtualDesktopHelper.SwitchToDesktop(id);
-                        await System.Threading.Tasks.Task.Delay(500); // Wait for switch to complete
-                        RefreshWindowList();
-                    }
-                };
-                DesktopContextMenu.Items.Add(item);
-            }
-
-            DesktopContextMenu.Items.Add(new System.Windows.Controls.Separator());
-
-            var addItem = new System.Windows.Controls.MenuItem { Header = "新しいデスクトップを作成 (+)" };
-            addItem.Click += (s, args) =>
-            {
-                VirtualDesktopHelper.CreateNewDesktop();
-                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-                timer.Tick += (st, et) => { timer.Stop(); RefreshWindowList(); };
-                timer.Start();
-            };
-            DesktopContextMenu.Items.Add(addItem);
-
-            var removeItem = new System.Windows.Controls.MenuItem { Header = "現在のデスクトップを閉じる (✕)" };
-            removeItem.Click += (s, args) =>
-            {
-                VirtualDesktopHelper.RemoveCurrentDesktop();
-                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-                timer.Tick += (st, et) => { timer.Stop(); RefreshWindowList(); };
-                timer.Start();
-            };
-            DesktopContextMenu.Items.Add(removeItem);
-
-            DesktopContextMenu.PlacementTarget = sender as UIElement;
-            DesktopContextMenu.IsOpen = true;
-        }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -629,20 +573,7 @@ namespace YomogiTaskBar
                         
                         e.Handled = true;
                     }
-                    else if (_settings.NextMonitor.IsPressed(e))
-                    {
-                        int selectedIndex = WindowsList.SelectedIndex;
-                        _windowManager.MoveToMonitor(selected.Handle, true);
-                        WindowsList.SelectedIndex = selectedIndex;
-                        e.Handled = true;
-                    }
-                    else if (_settings.PrevMonitor.IsPressed(e))
-                    {
-                        int selectedIndex = WindowsList.SelectedIndex;
-                        _windowManager.MoveToMonitor(selected.Handle, false);
-                        WindowsList.SelectedIndex = selectedIndex;
-                        e.Handled = true;
-                    }
+
                     else
                     {
                         shouldReactivate = false;
@@ -681,22 +612,6 @@ namespace YomogiTaskBar
             }
         }
 
-        private void MinimizeRestoreItemButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is System.Windows.Controls.Button button && button.DataContext is WindowItemViewModel windowItem)
-            {
-                if (windowItem.IsMinimized)
-                {
-                    // 最小化されている → 通常画面に復元してアクティブ化
-                    _windowManager.ActivateWindow(windowItem.Handle);
-                }
-                else
-                {
-                    // 通常・最大化状態 → 最小化
-                    _windowManager.MinimizeWindow(windowItem.Handle);
-                }
-            }
-        }
 
         private void PinButton_Click(object sender, RoutedEventArgs e)
         {

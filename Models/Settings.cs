@@ -81,8 +81,6 @@ namespace YomogiTaskBar.Models
         public ShortcutConfig Minimize { get; set; } = new ShortcutConfig { Key = Key.J, Modifiers = ModifierKeys.Control };
         public ShortcutConfig ToggleMaximize { get; set; } = new ShortcutConfig { Key = Key.K, Modifiers = ModifierKeys.Control };
         public ShortcutConfig Close { get; set; } = new ShortcutConfig { Key = Key.L, Modifiers = ModifierKeys.Control };
-        public ShortcutConfig NextMonitor { get; set; } = new ShortcutConfig { Key = Key.I, Modifiers = ModifierKeys.Control };
-        public ShortcutConfig PrevMonitor { get; set; } = new ShortcutConfig { Key = Key.U, Modifiers = ModifierKeys.Control };
         
         // Window position and display settings
         public WindowSettings WindowSettings { get; set; } = new WindowSettings();

@@ -248,8 +248,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - Minimize: 最小化ホットキー（デフォルト: Ctrl+J）
 - ToggleMaximize: 最大化切り替えホットキー（デフォルト: Ctrl+K）
 - Close: 閉じるホットキー（デフォルト: Ctrl+L）
-- NextMonitor: 次のモニターへ移動ホットキー（デフォルト: Ctrl+I）
-- PrevMonitor: 前のモニターへ移動ホットキー（デフォルト: Ctrl+U）
+
 - WindowSettings: ウィンドウ設定（WindowSettingsインスタンス）
 
 ### 3.8 Utilities
@@ -386,14 +385,7 @@ MainWindow (Window_Closing)
     "Key": "L",
     "Modifiers": "Control"
   },
-  "NextMonitor": {
-    "Key": "I",
-    "Modifiers": "Control"
-  },
-  "PrevMonitor": {
-    "Key": "U",
-    "Modifiers": "Control"
-  },
+
   "WindowSettings": {
     "IsAppBarMode": true,
     "Edge": 2,

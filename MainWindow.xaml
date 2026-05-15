@@ -151,22 +151,7 @@
                 </Grid>
             </Border>
 
-            <!-- Virtual Desktop Footer -->
-            <Border x:Name="FooterBorder" DockPanel.Dock="Bottom" VerticalAlignment="Bottom" Background="{DynamicResource HeaderBackgroundBrush}" Padding="16,10,10,10" 
-                    Cursor="Hand" MouseLeftButtonDown="DesktopFooter_Click" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                    AutomationProperties.Name="仮想デスクトップフッター" AutomationProperties.HelpText="現在の仮想デスクトップ情報と切り替えメニュー">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <TextBlock x:Name="CurrentDesktopText" Text="Desktop 1" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" FontSize="12"
-                               AutomationProperties.Name="現在のデスクトップ" AutomationProperties.HelpText="現在アクティブな仮想デスクトップ名"/>
-                    <TextBlock Text="&#xE70D;" FontFamily="{StaticResource IconFont}" FontSize="10" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="6,0,0,0"
-                               AutomationProperties.Name="メニュー展開ボタン" AutomationProperties.HelpText="仮想デスクトップ切り替えメニューを展開"/>
-                </StackPanel>
-                <Border.ContextMenu>
-                    <ContextMenu x:Name="DesktopContextMenu">
-                        <!-- Items populated dynamically -->
-                    </ContextMenu>
-                </Border.ContextMenu>
-            </Border>
+
 
             <!-- Window List -->
             <ListBox x:Name="WindowsList" Margin="6,0,0,0" Background="Transparent" BorderThickness="0"
@@ -217,31 +202,6 @@
                                             Opacity="0" Padding="15,0,0,0" Margin="0,-11,0,-11" Background="Transparent" Panel.ZIndex="10">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
                                             <!-- Minimize/Restore Button -->
-                                            <Button x:Name="ItemMinRestoreBtn" Content="─" Width="20" Height="20" Margin="0,0,4,0"
-                                                    Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#FF808080"
-                                                    Foreground="{DynamicResource ButtonIconBrush}" FontSize="10" FontWeight="Bold"
-                                                    Cursor="Hand" Click="MinimizeRestoreItemButton_Click" ToolTip="最小化"
-                                                    AutomationProperties.Name="最小化/復元ボタン">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="10">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                    <ControlTemplate.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter TargetName="Border" Property="Background" Value="#FF808080"/>
-                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="White"/>
-                                                                        </Trigger>
-                                                                    </ControlTemplate.Triggers>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
 
                                             <!-- Close Button -->
                                             <Button x:Name="ItemCloseBtn" Content="✕" Width="20" Height="20"
@@ -318,9 +278,7 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                                 <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
-                                <Setter TargetName="ItemMinRestoreBtn" Property="Content" Value="&#x2191;"/>
-                                <Setter TargetName="ItemMinRestoreBtn" Property="ToolTip" Value="元に戻す"/>
-                                <Setter TargetName="ItemMinRestoreBtn" Property="Opacity" Value="2"/>
+
                                 <Setter TargetName="ItemCloseBtn" Property="Opacity" Value="2"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="0">

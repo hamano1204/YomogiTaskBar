@@ -54,8 +54,7 @@ namespace YomogiTaskBar
                 Minimize = new ShortcutConfig { Key = settings.Minimize.Key, Modifiers = settings.Minimize.Modifiers },
                 ToggleMaximize = new ShortcutConfig { Key = settings.ToggleMaximize.Key, Modifiers = settings.ToggleMaximize.Modifiers },
                 Close = new ShortcutConfig { Key = settings.Close.Key, Modifiers = settings.Close.Modifiers },
-                NextMonitor = new ShortcutConfig { Key = settings.NextMonitor.Key, Modifiers = settings.NextMonitor.Modifiers },
-                PrevMonitor = new ShortcutConfig { Key = settings.PrevMonitor.Key, Modifiers = settings.PrevMonitor.Modifiers }
+
             };
 
             UpdateUI();
@@ -86,8 +85,7 @@ namespace YomogiTaskBar
             BtnMinimize.Content = CurrentSettings.Minimize.ToString();
             BtnToggleMaximize.Content = CurrentSettings.ToggleMaximize.ToString();
             BtnClose.Content = CurrentSettings.Close.ToString();
-            BtnNextMonitor.Content = CurrentSettings.NextMonitor.ToString();
-            BtnPrevMonitor.Content = CurrentSettings.PrevMonitor.ToString();
+
             LaunchOnStartupCheckBox.IsChecked = CurrentSettings.LaunchOnStartup;
 
             // Initialize Theme ComboBox
@@ -127,8 +125,7 @@ namespace YomogiTaskBar
                 "Minimize" => CurrentSettings.Minimize,
                 "ToggleMaximize" => CurrentSettings.ToggleMaximize,
                 "Close" => CurrentSettings.Close,
-                "NextMonitor" => CurrentSettings.NextMonitor,
-                "PrevMonitor" => CurrentSettings.PrevMonitor,
+
                 _ => null
             };
             
@@ -175,8 +172,7 @@ namespace YomogiTaskBar
                 case "Minimize": CurrentSettings.Minimize = config; break;
                 case "ToggleMaximize": CurrentSettings.ToggleMaximize = config; break;
                 case "Close": CurrentSettings.Close = config; break;
-                case "NextMonitor": CurrentSettings.NextMonitor = config; break;
-                case "PrevMonitor": CurrentSettings.PrevMonitor = config; break;
+
             }
 
             _activeButton.Content = config.ToString();

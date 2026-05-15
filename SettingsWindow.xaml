@@ -241,23 +241,7 @@
                                 </StackPanel>
                             </Grid>
 
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="前のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
-                                    <Button x:Name="BtnPrevMonitor" Click="HotkeyButton_Click" Tag="PrevMonitor" Style="{StaticResource ModernButton}"
-                                            Content="Ctrl + U" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="次のモニターへ移動" FontSize="11" Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,0,0,6"/>
-                                    <Button x:Name="BtnNextMonitor" Click="HotkeyButton_Click" Tag="NextMonitor" Style="{StaticResource ModernButton}"
-                                            Content="Ctrl + I" Padding="10,6" Background="{DynamicResource InputBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Foreground="{DynamicResource PrimaryTextBrush}" HorizontalContentAlignment="Left" Cursor="Hand"/>
-                                </StackPanel>
-                            </Grid>
+
                         </StackPanel>
                     </Border>
                     

@@ -194,47 +194,6 @@ namespace YomogiTaskBar.Managers
             }
         }
 
-        public void MoveToMonitor(IntPtr handle, bool next)
-        {
-            var allScreens = System.Windows.Forms.Screen.AllScreens;
-            if (allScreens.Length <= 1) return;
-
-            var currentScreen = System.Windows.Forms.Screen.FromHandle(handle);
-            int currentIndex = Array.IndexOf(allScreens, allScreens.FirstOrDefault(s => s.DeviceName == currentScreen.DeviceName));
-            
-            int targetIndex;
-            if (next)
-                targetIndex = (currentIndex + 1) % allScreens.Length;
-            else
-                targetIndex = (currentIndex - 1 + allScreens.Length) % allScreens.Length;
-
-            var targetScreen = allScreens[targetIndex];
-
-            // Restore if maximized for smooth transition (minimized windows stay minimized)
-            bool wasMaximized = NativeMethods.IsZoomed(handle);
-            if (wasMaximized)
-            {
-                NativeMethods.ShowWindow(handle, NativeMethods.SW_RESTORE);
-            }
-
-            if (NativeMethods.GetWindowRect(handle, out RECT rect))
-            {
-                int width = rect.right - rect.left;
-                int height = rect.bottom - rect.top;
-
-                // Calculate center position on target screen
-                int newX = targetScreen.Bounds.Left + (targetScreen.Bounds.Width - width) / 2;
-                int newY = targetScreen.Bounds.Top + (targetScreen.Bounds.Height - height) / 2;
-
-                // SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
-                NativeMethods.SetWindowPos(handle, IntPtr.Zero, newX, newY, 0, 0, 0x0001 | 0x0004 | 0x0010);
-
-                if (wasMaximized)
-                {
-                    NativeMethods.ShowWindow(handle, NativeMethods.SW_MAXIMIZE);
-                }
-            }
-        }
 
         private bool IsTaskbarWindow(IntPtr hWnd)
         {
