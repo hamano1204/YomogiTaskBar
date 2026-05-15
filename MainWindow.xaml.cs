@@ -734,7 +734,7 @@ namespace YomogiTaskBar
             }
         }
 
-        private static T FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
+        private static T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
         {
             if (parent == null) return null;
 

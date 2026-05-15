@@ -1,24 +1,30 @@
 # YomogiTaskBar
 
-YomogiTaskBarは、Windows用の垂直型タスクバーです。
+YomogiTaskBarは、Windows用のミニマリストな垂直型タスクバーです。起動中のアプリケーションを仮想デスクトップごとに整理して一覧表示し、直感的な操作でアプリを切り替えることができます。
 
+## Features / 主な機能
 
-## Features / 機能
-- タスクバーの様に起動中アプリを一覧表示し、アプリの切り替えが可能
-- マウス操作での対象アプリへの切り替え
-- キー入力でのアプリの切り替え
-　- `Win+Esc` で本アプリをフォーカス。上下キーでアプリを選択。`Enter` でアプリをアクティブ
-
+- **マルチデスクトップ管理**: 全仮想デスクトップのウィンドウを一画面にリストアップ。
+- **直感的な操作**: 
+  - マウスでの高速アクティブ化。
+  - アイテムホバー時の「✕」ボタンで素早くウィンドウを閉じる。
+- **キーボードナビゲーション**:
+  - `Win + Esc` でタスクバーを呼び出し、上下キーで選択、`Enter` で決定。
+  - **便利なショートカット**:
+    - `Ctrl + J`: ウィンドウを最小化
+    - `Ctrl + K`: ウィンドウを最大化/元に戻す
+    - `Ctrl + L`: ウィンドウを閉じる
+- **マルチモニター対応**: サブモニターのウィンドウをカラーバーで識別表示（左側固定）。
+- **洗練されたUI**:
+  - AppBar機能により画面端（左右）にドッキング。
+  - ピン留め解除時は自動隠蔽（オートハイド）に対応。
+  - システム設定に連動するライト/ダークテーマ。
+- **スタートアップ対応**: Windows起動時に自動で常駐可能。
 
 ## Requirements / 要件
 
-- Windows 10 (Build 19041) or later
+- Windows 10 (Build 19041) 以降
 - .NET 9.0 Runtime / SDK
-
-
-## Download / ダウンロード
-[インストーラー](https://github.com/hamano1204/YomogiTaskBar/releases)
-
 
 ## Build and Run / ビルドと実行
 
@@ -30,50 +36,26 @@ dotnet build
 dotnet run --project YomogiTaskBar.csproj
 ```
 
-
 ## Project Structure / プロジェクト構成
 
-- `YomogiTaskBar.csproj` - プロジェクトファイル / Project file
-- `App.xaml` / `App.xaml.cs` - アプリ起動と多重起動防止 / App entry and single instance logic
-- `MainWindow.xaml` / `MainWindow.xaml.cs` - メインタスクバーのUIと制御 / Main sidebar UI and logic
-- `SettingsWindow.xaml` / `SettingsWindow.xaml.cs` - 設定画面 / Settings window
-- `Controllers/` - AppBar制御とウィンドウ状態管理 / AppBar control and window state management
-- `Converters/` - XAMLコンバーター / XAML converters
-- `ViewModels/` - 表示用データモデル / ViewModels for UI binding
-- `Managers/` - 各種機能管理（ウィンドウ、AppBar、設定、ホットキー、テーマ、仮想デスクトップ等） / Functional managers
-- `Models/` - 設定データと定数のモデル定義 / Data models for settings and constants
-- `Themes/` - テーマリソース（Dark/Light） / Theme resources
-- `Utilities/` - ネイティブAPI定義とロギング / Native API definitions and logging
-
-
-## Notes / 注意事項
-
-- 本アプリはAIによるプログラミングで作成しています。
-- プログラム経験が浅いため、コードの品質には注意が必要です。
-
+- `MainWindow.xaml` / `.cs` - メインタスクバーのUIと制御（仮想デスクトップリスト表示）
+- `SettingsWindow.xaml` / `.cs` - 各種ホットキーやスタートアップの設定
+- `Controllers/` - AppBarの領域予約およびウィンドウ状態の制御
+- `Managers/` - ウィンドウ列挙、UWPアイコン抽出、仮想デスクトップ連携、設定管理
+- `Models/` - 設定データおよびショートカット設定の定義
+- `ViewModels/` - ウィンドウ情報のバインド用データモデル
+- `Utilities/` - Win32 APIのP/Invoke定義とロギング
 
 ## License / ライセンス
 
-This project is licensed under CC0-1.0.
+This project is licensed under CC0-1.0. (ただしアイコンは Tabler Icons (MIT) を使用しています)
 
-このプロジェクトはCC0-1.0の下でライセンスされています。
-
-ただしアイコンについては以下サイトのものを利用しており、別ライセンス(MIT)になります。
-
-This project uses icons from Tabler Icons (MIT License).
-https://tabler.io/icons
-
-
+---
 
 ## Screenshots / スクリーンショット
 
-### 全体
-![全体](images/sc-zentai.png)
-### 表示(シンプル)
-![表示(シンプル)](images/sc-simple.png)
-### 表示(仮想デスクトップ全体)
-![表示(仮想デスクトップすべて)](images/sc-desktop.png)
-### モニタインジケータ
-![モニタインジケータ](images/sc-monitor.png)
-### ダークモード
+![全体表示](images/sc-desktop.png)
+*仮想デスクトップごとに整理されたウィンドウリスト*
+
 ![ダークモード](images/sc-dark.png)
+*システム設定に連動するモダンなダークモード*
