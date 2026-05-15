@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using YomogiTaskBar.Utilities;
 
@@ -40,7 +39,7 @@ namespace YomogiTaskBar.Managers
                     _manager = (IVirtualDesktopManager?)Activator.CreateInstance(type);
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"IVirtualDesktopManager の COM インスタンス作成失敗: {ex.Message}", "VirtualDesktopHelper"); }
         }
 
         public static List<VirtualDesktopInfo> GetDesktops()
@@ -72,7 +71,7 @@ namespace YomogiTaskBar.Managers
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"仮想デスクトップ一覧の取得失敗: {ex.Message}", "VirtualDesktopHelper"); }
             if (results.Count == 0) results.Add(new VirtualDesktopInfo { Name = "Desktop 1", IsCurrent = true });
             return results;
         }
@@ -88,7 +87,7 @@ namespace YomogiTaskBar.Managers
                     if (!string.IsNullOrEmpty(name)) return name;
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"デスクトップ名の取得失敗 (ID={id}): {ex.Message}", "VirtualDesktopHelper"); }
             return $"Desktop {index}";
         }
 
@@ -146,7 +145,7 @@ namespace YomogiTaskBar.Managers
                 _manager.IsWindowOnCurrentVirtualDesktop(hWnd, out int onCurrent);
                 return onCurrent != 0;
             }
-            catch { return true; }
+            catch (Exception ex) { Logger.LogWarning($"IsWindowOnCurrentVirtualDesktop 失敗: {ex.Message}", "VirtualDesktopHelper"); return true; }
         }
 
         public static void MoveToCurrentDesktop(IntPtr hWnd)
@@ -163,7 +162,7 @@ namespace YomogiTaskBar.Managers
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"MoveToCurrentDesktop 失敗: {ex.Message}", "VirtualDesktopHelper"); }
         }
     }
 }

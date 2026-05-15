@@ -99,7 +99,7 @@ namespace YomogiTaskBar.Managers
             int bottom = bounds.Bottom;
 
             // SWP_NOACTIVATE | SWP_NOZORDER
-            NativeMethods.SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, 0x0014);
+            NativeMethods.SetWindowPos(_windowHandle, IntPtr.Zero, left, top, right - left, bottom - top, NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOZORDER);
         }
 
         public void Unregister()
@@ -154,9 +154,7 @@ namespace YomogiTaskBar.Managers
             NativeMethods.SHAppBarMessage((uint)ABMsg.ABM_SETPOS, ref abd);
 
             // Move the WPF window
-            NativeMethods.SetWindowPos(abd.hWnd, IntPtr.Zero, abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, 0x0014);
+            NativeMethods.SetWindowPos(abd.hWnd, IntPtr.Zero, abd.rc.left, abd.rc.top, abd.rc.right - abd.rc.left, abd.rc.bottom - abd.rc.top, NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOZORDER);
         }
     }
 }
-
-// End of file

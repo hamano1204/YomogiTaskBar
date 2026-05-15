@@ -1,5 +1,6 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Threading;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar;
 
@@ -37,7 +38,7 @@ public partial class App : System.Windows.Application
             {
                 _mutex.ReleaseMutex();
             }
-            catch { }
+            catch (System.Exception ex) { Logger.LogWarning($"Mutex release failure: {ex.Message}", "App"); }
             _mutex.Close();
         }
         base.OnExit(e);

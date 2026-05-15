@@ -9,6 +9,7 @@ using YomogiTaskBar.Managers;
 using System.Linq;
 using System.Reflection;
 using System.Diagnostics;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar
 {
@@ -74,7 +75,7 @@ namespace YomogiTaskBar
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to get version from assembly: {ex.Message}");
+                Logger.LogWarning($"Failed to get version from assembly: {ex.Message}", "SettingsWindow");
                 VersionTextBlock.Text = " vUnknown";
             }
         }
@@ -179,7 +180,8 @@ namespace YomogiTaskBar
             
             // Reset state using the helper
             var btn = _activeButton; // Keep reference to reset it
-            _activeButton = null; // Clear first so ResetActiveButton (if called elsewhere) doesn't interfere, though we are doing it manually here
+            _activeButton = null;
+            IsRecording = false; // Reset recording state so UI indicator is cleared
             
             btn.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, "InputBackgroundBrush");
             btn.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, "PrimaryTextBrush");

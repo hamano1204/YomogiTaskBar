@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System;
 using System.Windows;
+using YomogiTaskBar.Utilities;
 
 namespace YomogiTaskBar.Managers
 {
@@ -49,7 +50,7 @@ namespace YomogiTaskBar.Managers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Theme Error: {ex.Message}");
+                Logger.LogError("Theme load error", ex, "ThemeManager");
             }
         }
 
@@ -69,7 +70,7 @@ namespace YomogiTaskBar.Managers
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"システムテーマ模式の検出失敗: {ex.Message}", "ThemeManager"); }
             return false;
         }
     }

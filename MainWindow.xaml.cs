@@ -8,11 +8,9 @@ using YomogiTaskBar.Controllers;
 using YomogiTaskBar.Utilities;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Collections.Generic;
 using System.Windows.Media;
 using YomogiTaskBar.Models;
 
@@ -86,8 +84,8 @@ namespace YomogiTaskBar
                 int exStyle = NativeMethods.GetWindowLong(_windowHandle, NativeMethods.GWL_EXSTYLE);
                 NativeMethods.SetWindowLong(_windowHandle, NativeMethods.GWL_EXSTYLE, exStyle | (int)NativeMethods.WS_EX_TOOLWINDOW);
                 
-                int True = 1;
-                NativeMethods.DwmSetWindowAttribute(_windowHandle, NativeMethods.DWMWA_EXCLUDED_FROM_PEEK, ref True, sizeof(int));
+                int dwmEnabled = 1;
+                NativeMethods.DwmSetWindowAttribute(_windowHandle, NativeMethods.DWMWA_EXCLUDED_FROM_PEEK, ref dwmEnabled, sizeof(int));
 
                 // Initialize controllers
                 _stateManager = new WindowStateManager(this, _windowHandle, _settings);
@@ -418,7 +416,7 @@ namespace YomogiTaskBar
 
         private void ComponentDispatcher_ThreadPreprocessMessage(ref MSG msg, ref bool handled)
         {
-            if (msg.message == 0x0312 && (int)msg.wParam == HotkeyListener.HOTKEY_ID)
+            if (msg.message == NativeMethods.WM_HOTKEY && (int)msg.wParam == HotkeyListener.HOTKEY_ID)
             {
                 OnHotkeyTriggered();
                 handled = true;
@@ -778,28 +776,5 @@ namespace YomogiTaskBar
                 }
             }
         }
-
-
-        private static T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
-        {
-            if (parent == null) return null;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T childAsT && childAsT is FrameworkElement frameworkElement && frameworkElement.Name == childName)
-                {
-                    return childAsT;
-                }
-
-                var childOfChild = FindChild<T>(child, childName);
-                if (childOfChild != null)
-                {
-                    return childOfChild;
-                }
-            }
-            return null;
-        }
-
     }
 }

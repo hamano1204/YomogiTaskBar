@@ -183,6 +183,10 @@ namespace YomogiTaskBar.Utilities
         public const uint WM_SYSCOMMAND = 0x0112;
         public const uint SC_CLOSE = 0xF060;
         public const uint WM_GETICON = 0x007F;
+        public const int WM_HOTKEY = 0x0312;
+
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_NOZORDER = 0x0004;
 
         public const int ICON_SMALL = 0;
         public const int ICON_BIG = 1;

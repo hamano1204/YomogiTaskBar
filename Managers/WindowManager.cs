@@ -17,6 +17,26 @@ namespace YomogiTaskBar.Managers
     public class WindowManager
     {
         private readonly Dictionary<IntPtr, ImageSource> _iconCache = new Dictionary<IntPtr, ImageSource>();
+        // Cache COM instance — creating it per-call is expensive
+        private readonly IVirtualDesktopManager? _vdManager;
+        public WindowManager()
+        {
+            _vdManager = CreateVirtualDesktopManager();
+        }
+
+        private static IVirtualDesktopManager? CreateVirtualDesktopManager()
+        {
+            try
+            {
+                var type = Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a"));
+                if (type != null)
+                {
+                    return (IVirtualDesktopManager?)Activator.CreateInstance(type);
+                }
+            }
+            catch (Exception ex) { Logger.LogWarning($"VirtualDesktopManager の COM インスタンス作成失敗: {ex.Message}", "WindowManager"); }
+            return null;
+        }
 
         public List<WindowItemViewModel> GetRunningWindows()
         {
@@ -26,8 +46,8 @@ namespace YomogiTaskBar.Managers
             var foregroundWindow = NativeMethods.GetForegroundWindow();
             var desktops = VirtualDesktopHelper.GetDesktops();
             
-            // Get virtual desktop manager for desktop ID lookup
-            var vdManager = GetVirtualDesktopManager();
+            // Get virtual desktop manager for desktop ID lookup (cached field)
+            var vdManager = _vdManager;
 
             // Clean up cache for closed windows
             var currentHandles = new HashSet<IntPtr>();
@@ -147,20 +167,6 @@ namespace YomogiTaskBar.Managers
             }
 
             return result;
-        }
-
-        private IVirtualDesktopManager? GetVirtualDesktopManager()
-        {
-            try
-            {
-                var type = Type.GetTypeFromCLSID(new Guid("aa509086-5ca9-4c25-8f95-589d3c07b48a"));
-                if (type != null)
-                {
-                    return (IVirtualDesktopManager?)Activator.CreateInstance(type);
-                }
-            }
-            catch (Exception ex) { Logger.LogWarning($"VirtualDesktopManager の COM インスタンス作成失敗: {ex.Message}", "WindowManager"); }
-            return null;
         }
 
         public void ActivateWindow(IntPtr handle)
