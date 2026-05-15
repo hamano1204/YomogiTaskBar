@@ -36,6 +36,7 @@ namespace YomogiTaskBar
         private bool _refreshDisabled = false;
         private bool _isWinEscActive = false; // Flag to prevent any refresh during Win+Esc
         private DispatcherTimer? _navigationTimer;
+        private uint _shellHookMsg;
 
         /// <summary>
         /// Checks if the currently focused window is an external application (not this taskbar)
@@ -61,6 +62,13 @@ namespace YomogiTaskBar
         {
             _windowHandle = new WindowInteropHelper(this).Handle;
             
+            // Register for shell hook to get real-time window updates
+            _shellHookMsg = NativeMethods.RegisterWindowMessage("SHELLHOOK");
+            NativeMethods.RegisterShellHookWindow(_windowHandle);
+            
+            var source = HwndSource.FromHwnd(_windowHandle);
+            source.AddHook(WndProc);
+
             // Force pinned mode on startup for stability
             PinButton.Content = "📌";
         }
@@ -271,37 +279,35 @@ namespace YomogiTaskBar
             }
         }
 
-        private void RefreshWindowList()
+        private void RefreshWindowList(bool force = false)
         {
-            Logger.LogDebug("RefreshWindowList called", "MainWindow");
-            Logger.LogDebug($"_refreshDisabled={_refreshDisabled}, _isUserNavigating={_isUserNavigating}, _isExternalAppActive={_isExternalAppActive}, _isWinEscActive={_isWinEscActive}", "MainWindow");
-
-            // Skip refresh if Win+Esc is active (complete prevention)
-            if (_isWinEscActive)
+            // Skip refresh if in a state where the list should be stable (Win+Esc, Navigation, etc.)
+            // UNLESS it's a forced refresh (from Hotkey activation or Shell Hook events)
+            if (!force)
             {
-                Logger.LogDebug("RefreshWindowList skipped: Win+Esc active", "MainWindow");
-                return;
-            }
+                if (_isWinEscActive)
+                {
+                    Logger.LogDebug("RefreshWindowList skipped: Win+Esc active", "MainWindow");
+                    return;
+                }
 
-            // Skip refresh if refresh is disabled during navigation
-            if (_refreshDisabled)
-            {
-                Logger.LogDebug("RefreshWindowList skipped: refresh disabled", "MainWindow");
-                return;
-            }
+                if (_refreshDisabled)
+                {
+                    Logger.LogDebug("RefreshWindowList skipped: refresh disabled", "MainWindow");
+                    return;
+                }
 
-            // Skip refresh if user is actively navigating with keyboard
-            if (_isUserNavigating)
-            {
-                Logger.LogDebug("RefreshWindowList skipped: user navigating", "MainWindow");
-                return;
-            }
+                if (_isUserNavigating)
+                {
+                    Logger.LogDebug("RefreshWindowList skipped: user navigating", "MainWindow");
+                    return;
+                }
 
-            // Skip refresh if external app is active and has focus (to maintain Win+Esc selection)
-            if (_isExternalAppActive && IsExternalAppFocused())
-            {
-                Logger.LogDebug("RefreshWindowList skipped: external app active", "MainWindow");
-                return;
+                if (_isExternalAppActive && IsExternalAppFocused())
+                {
+                    Logger.LogDebug("RefreshWindowList skipped: external app active", "MainWindow");
+                    return;
+                }
             }
 
             var windows = _windowManager.GetRunningWindows();
@@ -389,7 +395,7 @@ namespace YomogiTaskBar
             this.Activate();
             _isWinEscActive = true; // Set Win+Esc flag to prevent refresh
             Logger.LogDebug("Win+Esc activated: setting flag to prevent refresh", "MainWindow");
-            RefreshWindowList();
+            RefreshWindowList(true); // Force refresh to get latest state on activation
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
@@ -732,6 +738,28 @@ namespace YomogiTaskBar
                     }
                 }
             }
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == _shellHookMsg)
+            {
+                int shellEvent = wParam.ToInt32();
+                switch (shellEvent)
+                {
+                    case NativeMethods.HSHELL_WINDOWCREATED:
+                    case NativeMethods.HSHELL_WINDOWDESTROYED:
+                    case NativeMethods.HSHELL_WINDOWACTIVATED:
+                    case NativeMethods.HSHELL_RUDEAPPACTIVATED:
+                    case NativeMethods.HSHELL_REDRAW:
+                    case NativeMethods.HSHELL_WINDOWREPLACED:
+                        Logger.LogDebug($"Shell hook event: {shellEvent}. Refreshing window list.", "MainWindow");
+                        // Refresh immediately on UI thread, bypassing external app checks
+                        RefreshWindowList(true);
+                        break;
+                }
+            }
+            return IntPtr.Zero;
         }
 
         private static T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject

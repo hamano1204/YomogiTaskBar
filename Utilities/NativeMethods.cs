@@ -117,6 +117,12 @@ namespace YomogiTaskBar.Utilities
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
+        [DllImport("user32.dll")]
+        public static extern bool RegisterShellHookWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern uint RegisterWindowMessage(string lpString);
+
         // --- dwmapi.dll ---
         [DllImport("dwmapi.dll")]
         public static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
@@ -195,5 +201,23 @@ namespace YomogiTaskBar.Utilities
         public const byte VK_RIGHT = 0x27;
         public const byte VK_D = 0x44;
         public const byte VK_F4 = 0x73;
+
+        // --- Shell Hook Constants ---
+        public const int HSHELL_WINDOWCREATED = 1;
+        public const int HSHELL_WINDOWDESTROYED = 2;
+        public const int HSHELL_ACTIVATESHELLWINDOW = 3;
+        public const int HSHELL_WINDOWACTIVATED = 4;
+        public const int HSHELL_GETMINRECT = 5;
+        public const int HSHELL_REDRAW = 6;
+        public const int HSHELL_TASKMAN = 7;
+        public const int HSHELL_LANGUAGE = 8;
+        public const int HSHELL_SYSMENU = 9;
+        public const int HSHELL_ENDTASK = 10;
+        public const int HSHELL_ACCESSIBILITYSTATE = 11;
+        public const int HSHELL_APPCOMMAND = 12;
+        public const int HSHELL_WINDOWREPLACED = 13;
+        public const int HSHELL_WINDOWREPLACING = 14;
+        public const int HSHELL_RUDEAPPACTIVATED = 32772;
+        public const int HSHELL_FLASH = 32774;
     }
 }
