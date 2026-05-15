@@ -205,7 +205,7 @@
 
                                             <!-- Close Button -->
                                             <Button x:Name="ItemCloseBtn" Content="✕" Width="20" Height="20"
-                                                    Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#FF808080"
+                                                    Background="#FFB0B0B0" BorderThickness="1" BorderBrush="#FFB0B0B0"
                                                     Foreground="{DynamicResource ButtonIconBrush}" FontSize="10" FontWeight="Bold"
                                                     Cursor="Hand" Click="CloseItemButton_Click" ToolTip="このウィンドウを閉じる"
                                                     AutomationProperties.Name="ウィンドウを閉じる"
@@ -221,7 +221,7 @@
                                                                     <ControlTemplate.Triggers>
                                                                         <Trigger Property="IsMouseOver" Value="True">
                                                                             <Setter TargetName="Border" Property="Background" Value="#E81123"/>
-                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="White"/>
+                                                                            <Setter TargetName="Border" Property="BorderBrush" Value="#E81123"/>
                                                                             <Setter Property="Foreground" Value="White"/>
                                                                         </Trigger>
                                                                     </ControlTemplate.Triggers>

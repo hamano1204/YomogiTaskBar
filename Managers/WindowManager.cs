@@ -255,13 +255,14 @@ namespace YomogiTaskBar.Managers
             }
 
             string? path = GetProcessPath(hWnd);
-            bool isUwp = path != null && path.Contains("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase);
+            bool isPackaged = path != null && (path.Contains("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) || 
+                                               path.Contains("\\SystemApps\\", StringComparison.OrdinalIgnoreCase));
 
             ImageSource? hIconSrc = null;
             IntPtr hIcon = IntPtr.Zero;
             bool needsDestroy = false;
 
-            if (isUwp)
+            if (isPackaged)
             {
                 // Try Windows 10 SDK extraction first (most reliable for UWP)
                 if (!string.IsNullOrEmpty(path))
@@ -290,7 +291,7 @@ namespace YomogiTaskBar.Managers
                     return true;
                 }, IntPtr.Zero);
 
-                // For UWP, ExtractIconEx directly from the exe can work if it has embedded icons
+                // For packaged apps, ExtractIconEx directly from the exe can work if it has embedded icons
                 if (hIcon == IntPtr.Zero && !string.IsNullOrEmpty(path))
                 {
                     IntPtr hLarge = IntPtr.Zero;

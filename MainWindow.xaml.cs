@@ -281,33 +281,32 @@ namespace YomogiTaskBar
 
         private void RefreshWindowList(bool force = false)
         {
-            // Skip refresh if in a state where the list should be stable (Win+Esc, Navigation, etc.)
-            // UNLESS it's a forced refresh (from Hotkey activation or Shell Hook events)
-            if (!force)
+            // Always block refresh during active keyboard interaction (Win+Esc, navigation)
+            // These guards are never bypassed, even by Shell Hook events
+            if (_isWinEscActive)
             {
-                if (_isWinEscActive)
-                {
-                    Logger.LogDebug("RefreshWindowList skipped: Win+Esc active", "MainWindow");
-                    return;
-                }
+                Logger.LogDebug("RefreshWindowList skipped: Win+Esc active", "MainWindow");
+                return;
+            }
 
-                if (_refreshDisabled)
-                {
-                    Logger.LogDebug("RefreshWindowList skipped: refresh disabled", "MainWindow");
-                    return;
-                }
+            if (_refreshDisabled)
+            {
+                Logger.LogDebug("RefreshWindowList skipped: refresh disabled", "MainWindow");
+                return;
+            }
 
-                if (_isUserNavigating)
-                {
-                    Logger.LogDebug("RefreshWindowList skipped: user navigating", "MainWindow");
-                    return;
-                }
+            if (_isUserNavigating)
+            {
+                Logger.LogDebug("RefreshWindowList skipped: user navigating", "MainWindow");
+                return;
+            }
 
-                if (_isExternalAppActive && IsExternalAppFocused())
-                {
-                    Logger.LogDebug("RefreshWindowList skipped: external app active", "MainWindow");
-                    return;
-                }
+            // The "force" flag only bypasses the external-app-active check
+            // (so Shell Hook events can update the list even when another app is focused)
+            if (!force && _isExternalAppActive && IsExternalAppFocused())
+            {
+                Logger.LogDebug("RefreshWindowList skipped: external app active", "MainWindow");
+                return;
             }
 
             var windows = _windowManager.GetRunningWindows();
@@ -317,7 +316,13 @@ namespace YomogiTaskBar
             IntPtr? selectedHandle = selectedItem?.Handle;
             int selectedIndex = WindowsList.SelectedIndex;
             bool hasFocus = WindowsList.IsFocused;
-            Logger.LogDebug($"Preserving selection: Handle={selectedHandle}, Index={selectedIndex}, Title={selectedItem?.Title}, HasFocus={hasFocus}", "MainWindow");
+            // Also check if a specific ListBoxItem has keyboard focus
+            bool hasItemFocus = false;
+            if (selectedItem != null)
+            {
+                var container = WindowsList.ItemContainerGenerator.ContainerFromItem(selectedItem) as ListBoxItem;
+                hasItemFocus = container?.IsFocused == true || container?.IsKeyboardFocused == true;
+            }
 
             // Clear and rebuild the list (simpler approach for multiple separators)
             _windows.Clear();
@@ -334,29 +339,31 @@ namespace YomogiTaskBar
                 var restoredItem = _windows.FirstOrDefault(w => w.Handle == selectedHandle.Value);
                 if (restoredItem != null)
                 {
-                    Logger.LogDebug($"Restoring selection by handle: {restoredItem.Title}", "MainWindow");
                     WindowsList.SelectedItem = restoredItem;
+
+                    // Restore focus to the specific ListBoxItem if it had focus before
+                    if (hasItemFocus || hasFocus)
+                    {
+                        Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            var item = WindowsList.ItemContainerGenerator.ContainerFromItem(restoredItem) as ListBoxItem;
+                            if (item != null)
+                            {
+                                item.Focus();
+                            }
+                        }), System.Windows.Threading.DispatcherPriority.Loaded);
+                    }
                 }
                 else if (selectedIndex >= 0 && selectedIndex < _windows.Count)
                 {
                     // Fallback to index-based restoration
-                    Logger.LogDebug($"Handle not found, restoring by index: {selectedIndex}", "MainWindow");
                     WindowsList.SelectedIndex = selectedIndex;
                 }
-                else
-                {
-                    Logger.LogDebug("Selection restoration failed: handle not found and index out of range", "MainWindow");
-                }
-            }
-            else
-            {
-                Logger.LogDebug("No selection to restore", "MainWindow");
             }
 
             // Restore focus if it was lost during refresh
-            if (hasFocus && !WindowsList.IsFocused)
+            if (hasFocus && !WindowsList.IsFocused && WindowsList.SelectedItem == null)
             {
-                Logger.LogDebug("Restoring focus to WindowsList", "MainWindow");
                 WindowsList.Focus();
             }
 
@@ -393,9 +400,8 @@ namespace YomogiTaskBar
             if (_appBarController?.IsHidden == true) _appBarController.ShowWindow();
 
             this.Activate();
-            _isWinEscActive = true; // Set Win+Esc flag to prevent refresh
-            Logger.LogDebug("Win+Esc activated: setting flag to prevent refresh", "MainWindow");
             RefreshWindowList(true); // Force refresh to get latest state on activation
+            _isWinEscActive = true; // Set Win+Esc flag AFTER refresh to prevent subsequent Shell Hook refreshes
 
             Dispatcher.BeginInvoke(new Action(() =>
             {
