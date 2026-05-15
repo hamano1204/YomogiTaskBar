@@ -73,7 +73,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - **Controller Layer**: AppBarController, WindowStateManager
 - **Manager Layer**: 各機能マネージャー
 - **ViewModel Layer**: WindowItemViewModel
-- **Model Layer**: Settings (AppSettings, WindowSettings, ShortcutConfig, MonitorIndicatorDisplay)
+- **Model Layer**: Settings (AppSettings, WindowSettings, ShortcutConfig)
 - **Utility Layer**: NativeMethods, Logger
 
 ---
@@ -111,7 +111,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 
 **主要機能**:
 - テーマ設定 (System/Light/Dark)
-- モニターインジケーター設定 (None/Left/Right)
 - スタートアップ設定
 - ホットキー設定
 - 設定の保存・キャンセル
@@ -212,17 +211,8 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - DesktopName: デスクトップ名
 - IsCurrentDesktop: 現在のデスクトップフラグ
 - ShouldShowLeftIndicator: 左モニターインジケーター表示フラグ
-- ShouldShowRightIndicator: 右モニターインジケーター表示フラグ
 
 ### 3.7 Models (Settings.cs)
-
-#### 3.7.2 MonitorIndicatorDisplay (Enum)
-**役割**: モニターインジケーターの表示設定
-
-**値**:
-- None: 表示しない
-- Left: 左側に表示
-- Right: 右側に表示
 
 #### 3.7.3 ShortcutConfig
 **役割**: ショートカットキー設定
@@ -254,7 +244,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 **プロパティ**:
 - ThemeMode: テーマモード（"Light"/"Dark"/"System"）
 - LaunchOnStartup: スタートアップ起動フラグ
-- MonitorIndicatorDisplay: モニターインジケーター表示設定
 - GlobalActivate: グローバルアクティベートホットキー（デフォルト: Win+Esc）
 - Minimize: 最小化ホットキー（デフォルト: Ctrl+J）
 - ToggleMaximize: 最大化切り替えホットキー（デフォルト: Ctrl+K）
@@ -381,7 +370,6 @@ MainWindow (Window_Closing)
 {
   "ThemeMode": "System",
   "LaunchOnStartup": false,
-  "MonitorIndicatorDisplay": "Right",
   "GlobalActivate": {
     "Key": "Escape",
     "Modifiers": "Windows"

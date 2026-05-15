@@ -20,7 +20,6 @@ namespace YomogiTaskBar.ViewModels
         private string _desktopName = string.Empty;
         private bool _isCurrentDesktop;
         private bool _shouldShowLeftIndicator;
-        private bool _shouldShowRightIndicator;
 
         public IntPtr Handle
         {
@@ -100,11 +99,6 @@ namespace YomogiTaskBar.ViewModels
             set { if (_shouldShowLeftIndicator != value) { _shouldShowLeftIndicator = value; OnPropertyChanged(); } }
         }
 
-        public bool ShouldShowRightIndicator
-        {
-            get => _shouldShowRightIndicator;
-            set { if (_shouldShowRightIndicator != value) { _shouldShowRightIndicator = value; OnPropertyChanged(); } }
-        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

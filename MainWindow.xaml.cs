@@ -796,9 +796,9 @@ namespace YomogiTaskBar
         private void UpdateMonitorIndicatorVisibility()
         {
             int monitorCount = GetMonitorCount();
-            bool shouldShowIndicators = monitorCount > 1 && _settings.MonitorIndicatorDisplay != MonitorIndicatorDisplay.None;
+            bool shouldShowIndicators = monitorCount > 1;
             
-            Logger.LogDebug($"UpdateMonitorIndicatorVisibility: monitorCount={monitorCount}, shouldShow={shouldShowIndicators}, setting={_settings.MonitorIndicatorDisplay}, items={WindowsList.Items.Count}", "MainWindow");
+            Logger.LogDebug($"UpdateMonitorIndicatorVisibility: monitorCount={monitorCount}, items={WindowsList.Items.Count}", "MainWindow");
             
             // Update visibility for all window items
             for (int i = 0; i < WindowsList.Items.Count; i++)
@@ -806,23 +806,14 @@ namespace YomogiTaskBar
                 var item = WindowsList.Items[i] as WindowItemViewModel;
                 if (item != null)
                 {
-                    // Reset both indicators
+                    // Reset indicator
                     item.ShouldShowLeftIndicator = false;
-                    item.ShouldShowRightIndicator = false;
                     
-                    // Show indicators only if conditions are met
+                    // Show indicator only if conditions are met
                     if (shouldShowIndicators && item.MonitorIndex > 0)
                     {
-                        if (_settings.MonitorIndicatorDisplay == MonitorIndicatorDisplay.Left)
-                        {
-                            item.ShouldShowLeftIndicator = true;
-                            Logger.LogDebug($"Showing left indicator for {item.Title}", "MainWindow");
-                        }
-                        else // Right
-                        {
-                            item.ShouldShowRightIndicator = true;
-                            Logger.LogDebug($"Showing right indicator for {item.Title}", "MainWindow");
-                        }
+                        item.ShouldShowLeftIndicator = true;
+                        Logger.LogDebug($"Showing left indicator for {item.Title}", "MainWindow");
                     }
                 }
             }
