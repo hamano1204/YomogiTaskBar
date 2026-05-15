@@ -185,14 +185,14 @@
                                         AutomationProperties.Name="モニターインジケーター（左側）" 
                                         AutomationProperties.HelpText="ウィンドウが表示されているモニター番号を示す縦棒"/>
                                 
-                                <Grid Grid.Column="1">
+                                <Grid x:Name="IconGrid" Grid.Column="1">
                                     <Image Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" 
                                            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="アプリケーションアイコン"/>
                                 </Grid>
 
                                 <!-- Title + Floating button overlay (same column) -->
                                 <Grid Grid.Column="2">
-                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
+                                    <TextBlock x:Name="ItemTitleText" Text="{Binding Title}" VerticalAlignment="Center" FontSize="12"
                                                Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource PrimaryTextBrush}" Panel.ZIndex="0"
                                                AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="ウィンドウタイトル"/>
@@ -277,9 +277,8 @@
                                 <Setter TargetName="CurrentDesktopIndicator" Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsMinimized}" Value="True">
-                                <Setter TargetName="ContentGrid" Property="Opacity" Value="0.5"/>
-
-                                <Setter TargetName="ItemCloseBtn" Property="Opacity" Value="2"/>
+                                <Setter TargetName="IconGrid" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="ItemTitleText" Property="Opacity" Value="0.5"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding MonitorIndex}" Value="0">
                                 <!-- MonitorIndex 0 items will have visibility controlled by UpdateMonitorIndicatorVisibility method -->
