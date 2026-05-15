@@ -20,107 +20,6 @@ namespace YomogiTaskBar.Managers
 
         public List<WindowItemViewModel> GetRunningWindows()
         {
-            return GetRunningWindowsSimple();
-        }
-
-        public List<WindowItemViewModel> GetRunningWindows(LayoutMode layoutMode)
-        {
-            if (layoutMode == LayoutMode.Simple)
-            {
-                return GetRunningWindowsSimple();
-            }
-            else
-            {
-                return GetRunningWindowsAllDesktops();
-            }
-        }
-
-        private List<WindowItemViewModel> GetRunningWindowsSimple()
-        {
-            var windows = new List<WindowItemViewModel>();
-            var currentProcessId = Process.GetCurrentProcess().Id;
-            var allScreens = System.Windows.Forms.Screen.AllScreens;
-            var foregroundWindow = NativeMethods.GetForegroundWindow();
-
-            // Clean up cache for closed windows
-            var currentHandles = new HashSet<IntPtr>();
-
-            NativeMethods.EnumWindows((hWnd, lParam) =>
-            {
-                if (IsTaskbarWindow(hWnd))
-                {
-                    NativeMethods.GetWindowThreadProcessId(hWnd, out uint processId);
-
-                    currentHandles.Add(hWnd);
-
-                    // Exclude our own app
-                    if (processId == currentProcessId)
-                        return true;
-
-                    StringBuilder titleBuilder = new StringBuilder(256);
-                    if (NativeMethods.GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity) > 0)
-                    {
-                        var title = titleBuilder.ToString();
-                        
-                        // Filter out empty descriptions, Program Manager, and known overlay/hidden windows
-                        string[] ignoredTitles = { "Program Manager", "Recording", "Microsoft Text Input Application" };
-                        
-                        if (!string.IsNullOrWhiteSpace(title) && !ignoredTitles.Contains(title))
-                        {
-                            var screen = System.Windows.Forms.Screen.FromHandle(hWnd);
-                            int monitorIndex = 0;
-                            if (allScreens.Length > 1)
-                            {
-                                monitorIndex = Array.IndexOf(allScreens, allScreens.FirstOrDefault(s => s.DeviceName == screen.DeviceName)) + 1;
-                            }
-
-                            windows.Add(new WindowItemViewModel
-                            {
-                                Handle = hWnd,
-                                Title = title,
-                                ProcessId = (int)processId,
-                                IconSource = GetWindowIcon(hWnd),
-                                IsMinimized = NativeMethods.IsIconic(hWnd),
-                                MonitorIndex = monitorIndex,
-                                IsActive = (hWnd == foregroundWindow)
-                            });
-                        }
-                    }
-                }
-                return true;
-            }, IntPtr.Zero);
-
-            // Remove closed windows from cache
-            var keysToRemove = _iconCache.Keys.Where(k => !currentHandles.Contains(k)).ToList();
-            foreach (var key in keysToRemove)
-            {
-                _iconCache.Remove(key);
-            }
-
-            var normalWindows = windows.Where(w => !w.IsMinimized)
-                .OrderBy(w => w.MonitorIndex)
-                .ThenBy(w => w.ProcessId)
-                .ToList();
-            var minimizedWindows = windows.Where(w => w.IsMinimized)
-                .OrderBy(w => w.MonitorIndex)
-                .ThenBy(w => w.ProcessId)
-                .ToList();
-
-            var sortedWindows = new List<WindowItemViewModel>();
-            sortedWindows.AddRange(normalWindows);
-
-            if (normalWindows.Count > 0 && minimizedWindows.Count > 0)
-            {
-                sortedWindows.Add(new WindowItemViewModel { IsSeparator = true, IsDesktopSeparator = false, Title = "" });
-            }
-
-            sortedWindows.AddRange(minimizedWindows);
-
-            return sortedWindows;
-        }
-
-        private List<WindowItemViewModel> GetRunningWindowsAllDesktops()
-        {
             var windows = new List<WindowItemViewModel>();
             var currentProcessId = Process.GetCurrentProcess().Id;
             var allScreens = System.Windows.Forms.Screen.AllScreens;
@@ -135,7 +34,7 @@ namespace YomogiTaskBar.Managers
 
             NativeMethods.EnumWindows((hWnd, lParam) =>
             {
-                if (IsTaskbarWindowAllDesktops(hWnd))
+                if (IsTaskbarWindow(hWnd))
                 {
                     NativeMethods.GetWindowThreadProcessId(hWnd, out uint processId);
 
@@ -338,23 +237,6 @@ namespace YomogiTaskBar.Managers
         }
 
         private bool IsTaskbarWindow(IntPtr hWnd)
-        {
-            if (!NativeMethods.IsWindowVisible(hWnd))
-                return false;
-
-            int cloakedVal;
-            NativeMethods.DwmGetWindowAttribute(hWnd, NativeMethods.DWMWA_CLOAKED, out cloakedVal, sizeof(int));
-            if (cloakedVal != 0)
-                return false;
-
-            // Check if window is on current virtual desktop
-            if (!VirtualDesktopHelper.IsWindowOnCurrentDesktop(hWnd))
-                return false;
-
-            return IsTaskbarWindowAllDesktops(hWnd);
-        }
-
-        private bool IsTaskbarWindowAllDesktops(IntPtr hWnd)
         {
             // Check if window is on other virtual desktops
             // Windows on other desktops are not visible, but should be shown

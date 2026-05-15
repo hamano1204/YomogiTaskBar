@@ -30,7 +30,6 @@ namespace YomogiTaskBar
         private IntPtr _windowHandle;
         private AppSettings _settings;
         private DispatcherTimer? _autoHideTimer;
-        private LayoutMode _currentLayoutMode;
         private bool _isExternalAppActive = false;
         private bool _isUserNavigating = false;
         private bool _selectionLocked = false;
@@ -51,7 +50,6 @@ namespace YomogiTaskBar
         {
             InitializeComponent();
             _settings = SettingsManager.Load();
-            _currentLayoutMode = _settings.LayoutMode;
             _settings.LaunchOnStartup = StartupManager.IsEnabled();
             ThemeManager.ApplyTheme(_settings.ThemeMode);
             _windowManager = new WindowManager();
@@ -308,7 +306,7 @@ namespace YomogiTaskBar
                 return;
             }
 
-            var windows = _windowManager.GetRunningWindows(_currentLayoutMode);
+            var windows = _windowManager.GetRunningWindows();
 
             // Preserve selected item, index, and focus state before clearing
             WindowItemViewModel? selectedItem = WindowsList.SelectedItem as WindowItemViewModel;
@@ -511,13 +509,6 @@ namespace YomogiTaskBar
                 _settings = settingsWindow.CurrentSettings;
                 ThemeManager.ApplyTheme(_settings.ThemeMode);
                 _stateManager?.UpdateSettings(_settings);
-                
-                // Reflect layout mode change immediately
-                if (_currentLayoutMode != _settings.LayoutMode)
-                {
-                    _currentLayoutMode = _settings.LayoutMode;
-                    RefreshWindowList();
-                }
                 
                 // Refresh window list to apply monitor indicator changes
                 RefreshWindowList();

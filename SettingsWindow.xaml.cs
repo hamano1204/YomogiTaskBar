@@ -50,7 +50,6 @@ namespace YomogiTaskBar
             {
                 ThemeMode = settings.ThemeMode,
                 LaunchOnStartup = settings.LaunchOnStartup,
-                LayoutMode = settings.LayoutMode,
                 MonitorIndicatorDisplay = settings.MonitorIndicatorDisplay,
                 GlobalActivate = new ShortcutConfig { Key = settings.GlobalActivate.Key, Modifiers = settings.GlobalActivate.Modifiers },
                 Minimize = new ShortcutConfig { Key = settings.Minimize.Key, Modifiers = settings.Minimize.Modifiers },
@@ -98,16 +97,6 @@ namespace YomogiTaskBar
                 if (item.Tag.ToString() == CurrentSettings.ThemeMode)
                 {
                     ThemeComboBox.SelectedItem = item;
-                    break;
-                }
-            }
-
-            // Initialize LayoutMode ComboBox
-            foreach (ComboBoxItem item in LayoutModeComboBox.Items)
-            {
-                if (item.Tag.ToString() == CurrentSettings.LayoutMode.ToString())
-                {
-                    LayoutModeComboBox.SelectedItem = item;
                     break;
                 }
             }
@@ -239,15 +228,6 @@ namespace YomogiTaskBar
         {
             if (_isInitializing) return;
             CurrentSettings.LaunchOnStartup = LaunchOnStartupCheckBox.IsChecked == true;
-        }
-
-        private void LayoutModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isInitializing) return;
-            if (LayoutModeComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
-            {
-                CurrentSettings.LayoutMode = Enum.Parse<LayoutMode>(item.Tag.ToString() ?? "Simple");
-            }
         }
 
         private void MonitorIndicatorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

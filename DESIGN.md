@@ -73,7 +73,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 - **Controller Layer**: AppBarController, WindowStateManager
 - **Manager Layer**: 各機能マネージャー
 - **ViewModel Layer**: WindowItemViewModel
-- **Model Layer**: Settings (AppSettings, WindowSettings, ShortcutConfig, LayoutMode, MonitorIndicatorDisplay)
+- **Model Layer**: Settings (AppSettings, WindowSettings, ShortcutConfig, MonitorIndicatorDisplay)
 - **Utility Layer**: NativeMethods, Logger
 
 ---
@@ -111,7 +111,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 
 **主要機能**:
 - テーマ設定 (System/Light/Dark)
-- レイアウトモード設定 (Simple/AllDesktops)
 - モニターインジケーター設定 (None/Left/Right)
 - スタートアップ設定
 - ホットキー設定
@@ -158,7 +157,7 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 **役割**: 実行中ウィンドウの取得と操作
 
 **主要機能**:
-- 実行中ウィンドウの列挙とフィルタリング (2モード: Simple/AllDesktops)
+- 実行中ウィンドウの列挙とフィルタリング
 - ウィンドウのアクティブ化、最小化、最大化、閉じる
 - ウィンドウのモニター間移動
 - ウィンドウアイコンの取得（UWP対応: PackageManager使用）
@@ -217,13 +216,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 
 ### 3.7 Models (Settings.cs)
 
-#### 3.7.1 LayoutMode (Enum)
-**役割**: アプリ一覧のレイアウトモード
-
-**値**:
-- Simple: シンプルレイアウト（現在のデスクトップのみ）
-- AllDesktops: すべてのデスクトップのウィンドウを表示
-
 #### 3.7.2 MonitorIndicatorDisplay (Enum)
 **役割**: モニターインジケーターの表示設定
 
@@ -262,7 +254,6 @@ YomogiTaskBarは、Windows用の垂直型タスクバーアプリケーション
 **プロパティ**:
 - ThemeMode: テーマモード（"Light"/"Dark"/"System"）
 - LaunchOnStartup: スタートアップ起動フラグ
-- LayoutMode: レイアウトモード（Simple/AllDesktops）
 - MonitorIndicatorDisplay: モニターインジケーター表示設定
 - GlobalActivate: グローバルアクティベートホットキー（デフォルト: Win+Esc）
 - Minimize: 最小化ホットキー（デフォルト: Ctrl+J）
@@ -390,7 +381,6 @@ MainWindow (Window_Closing)
 {
   "ThemeMode": "System",
   "LaunchOnStartup": false,
-  "LayoutMode": "Simple",
   "MonitorIndicatorDisplay": "Right",
   "GlobalActivate": {
     "Key": "Escape",

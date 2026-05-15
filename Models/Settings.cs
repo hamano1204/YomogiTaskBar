@@ -1,15 +1,9 @@
-﻿using System.Windows.Input;
+using System.Windows.Input;
 using System.Collections.Generic;
 using YomogiTaskBar.Managers;
 
 namespace YomogiTaskBar.Models
 {
-    public enum LayoutMode
-    {
-        Simple,         // シンプルレイアウト（現在のデスクトップのみ）
-        AllDesktops     // デスクトップをすべて表示
-    }
-
     public enum MonitorIndicatorDisplay
     {
         None,           // 表示しない
@@ -88,7 +82,7 @@ namespace YomogiTaskBar.Models
     {
         public string ThemeMode { get; set; } = "System"; // Light, Dark, System
         public bool LaunchOnStartup { get; set; } = false;
-        public LayoutMode LayoutMode { get; set; } = LayoutMode.Simple; // アプリ一覧のレイアウトモード
+
         public MonitorIndicatorDisplay MonitorIndicatorDisplay { get; set; } = MonitorIndicatorDisplay.Right; // モニターインジケーターの表示設定
         public ShortcutConfig GlobalActivate { get; set; } = new ShortcutConfig { Key = Key.Escape, Modifiers = ModifierKeys.Windows };
         public ShortcutConfig Minimize { get; set; } = new ShortcutConfig { Key = Key.J, Modifiers = ModifierKeys.Control };
