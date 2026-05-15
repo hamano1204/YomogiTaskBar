@@ -6,7 +6,6 @@ using YomogiTaskBar.Managers;
 using YomogiTaskBar.ViewModels;
 using YomogiTaskBar.Controllers;
 using YomogiTaskBar.Utilities;
-using System.Reflection;
 using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 using System.Runtime.InteropServices;
@@ -26,7 +25,6 @@ namespace YomogiTaskBar
         private WindowManager _windowManager;
         private ObservableCollection<WindowItemViewModel> _windows;
         private DispatcherTimer? _timer;
-        private Forms.NotifyIcon? _notifyIcon;
         private IntPtr _windowHandle;
         private AppSettings _settings;
         private DispatcherTimer? _autoHideTimer;
@@ -36,7 +34,10 @@ namespace YomogiTaskBar
         private bool _refreshDisabled = false;
         private bool _isWinEscActive = false; // Flag to prevent any refresh during Win+Esc
         private DispatcherTimer? _navigationTimer;
-        private uint _shellHookMsg;
+
+        // Controllers
+        private TrayIconController? _trayIconController;
+        private ShellHookManager? _shellHookManager;
 
         /// <summary>
         /// Checks if the currently focused window is an external application (not this taskbar)
@@ -63,11 +64,13 @@ namespace YomogiTaskBar
             _windowHandle = new WindowInteropHelper(this).Handle;
             
             // Register for shell hook to get real-time window updates
-            _shellHookMsg = NativeMethods.RegisterWindowMessage("SHELLHOOK");
-            NativeMethods.RegisterShellHookWindow(_windowHandle);
-            
-            var source = HwndSource.FromHwnd(_windowHandle);
-            source.AddHook(WndProc);
+            _shellHookManager = new ShellHookManager(_windowHandle);
+            _shellHookManager.WindowListNeedsRefresh += (s, args) => 
+            {
+                // Refresh immediately on UI thread, bypassing external app checks
+                RefreshWindowList(true);
+            };
+            _shellHookManager.Initialize();
 
             // Force pinned mode on startup for stability
             PinButton.Content = "📌";
@@ -184,7 +187,8 @@ namespace YomogiTaskBar
                 Logger.LogDebug("Navigation timer initialized but not started", "MainWindow");
 
                 // Set up NotifyIcon for System Tray
-                SetupNotifyIcon();
+                _trayIconController = new TrayIconController(this);
+                _trayIconController.Setup();
 
                 Logger.LogOperationComplete("Window initialization", "MainWindow");
             }
@@ -210,47 +214,23 @@ namespace YomogiTaskBar
                 HotkeyListener.Unregister(_windowHandle, HotkeyListener.HOTKEY_ID);
 
                 // Cleanup timers
+                _timer?.Stop();
+                _timer = null;
+                _autoHideTimer?.Stop();
+                _autoHideTimer = null;
                 _navigationTimer?.Stop();
                 _navigationTimer = null;
 
                 // Cleanup controllers
                 _appBarController?.Dispose();
-                
-                if (_notifyIcon != null)
-                {
-                    _notifyIcon.Visible = false;
-                    _notifyIcon.Dispose();
-                }
+                _trayIconController?.Dispose();
+                _shellHookManager?.Dispose();
 
                 Logger.LogOperationComplete("Window cleanup", "MainWindow");
             }
             catch (Exception ex)
             {
                 Logger.LogError("Failed to cleanup window", ex, "MainWindow");
-            }
-        }
-
-        private void SetupNotifyIcon()
-        {
-            try
-            {
-                _notifyIcon = new Forms.NotifyIcon();
-                _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
-                _notifyIcon.Visible = true;
-                _notifyIcon.Text = "YomogiTaskBar";
-
-                var contextMenuStrip = new Forms.ContextMenuStrip();
-                var closeMenuItem = new Forms.ToolStripMenuItem("閉じる");
-                closeMenuItem.Click += (s, args) => this.Close();
-                contextMenuStrip.Items.Add(closeMenuItem);
-
-                _notifyIcon.ContextMenuStrip = contextMenuStrip;
-                
-                Logger.LogInfo("NotifyIcon setup completed", "MainWindow");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Failed to setup NotifyIcon", ex, "MainWindow");
             }
         }
 
@@ -324,14 +304,67 @@ namespace YomogiTaskBar
                 hasItemFocus = container?.IsFocused == true || container?.IsKeyboardFocused == true;
             }
 
-            // Clear and rebuild the list (simpler approach for multiple separators)
-            _windows.Clear();
-            foreach (var window in windows)
+            // Smart Sync: Update the ObservableCollection without clearing it to prevent UI flicker
+            // Step 1: Remove items that are no longer in the new list
+            for (int i = _windows.Count - 1; i >= 0; i--)
             {
-                _windows.Add(window);
+                var oldItem = _windows[i];
+                var newItemIndex = windows.FindIndex(w => 
+                    (w.IsSeparator && oldItem.IsSeparator && w.Title == oldItem.Title) || 
+                    (!w.IsSeparator && !oldItem.IsSeparator && w.Handle == oldItem.Handle));
+                
+                if (newItemIndex == -1)
+                {
+                    _windows.RemoveAt(i);
+                }
             }
 
-            Logger.LogDebug($"List rebuilt: {_windows.Count} items", "MainWindow");
+            // Step 2: Update existing items and insert new ones in the correct order
+            for (int i = 0; i < windows.Count; i++)
+            {
+                var newItem = windows[i];
+                if (i < _windows.Count)
+                {
+                    var oldItem = _windows[i];
+                    bool isMatch = (newItem.IsSeparator && oldItem.IsSeparator && newItem.Title == oldItem.Title) ||
+                                   (!newItem.IsSeparator && !oldItem.IsSeparator && newItem.Handle == oldItem.Handle);
+
+                    if (isMatch)
+                    {
+                        // Update properties of the existing item
+                        if (!newItem.IsSeparator)
+                        {
+                            oldItem.Title = newItem.Title;
+                            oldItem.IsActive = newItem.IsActive;
+                            oldItem.IsMinimized = newItem.IsMinimized;
+                            oldItem.IconSource = newItem.IconSource;
+                            oldItem.ShouldShowLeftIndicator = newItem.ShouldShowLeftIndicator;
+                            oldItem.MonitorIndex = newItem.MonitorIndex;
+                            oldItem.DesktopId = newItem.DesktopId;
+                            oldItem.DesktopName = newItem.DesktopName;
+                        }
+                    }
+                    else
+                    {
+                        // Items don't match, insert the new item here to maintain order
+                        _windows.Insert(i, newItem);
+                    }
+                }
+                else
+                {
+                    // Reached the end of the existing list, append
+                    _windows.Add(newItem);
+                }
+            }
+
+            Logger.LogDebug($"List synchronized: {_windows.Count} items", "MainWindow");
+
+            // Step 3: Trim excess items at the tail that were not replaced
+            // (can occur when item order changes and inserts push old items down)
+            while (_windows.Count > windows.Count)
+            {
+                _windows.RemoveAt(_windows.Count - 1);
+            }
 
             // Restore selected item - try by handle first, then by index as fallback
             if (selectedHandle.HasValue)
@@ -746,27 +779,6 @@ namespace YomogiTaskBar
             }
         }
 
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == _shellHookMsg)
-            {
-                int shellEvent = wParam.ToInt32();
-                switch (shellEvent)
-                {
-                    case NativeMethods.HSHELL_WINDOWCREATED:
-                    case NativeMethods.HSHELL_WINDOWDESTROYED:
-                    case NativeMethods.HSHELL_WINDOWACTIVATED:
-                    case NativeMethods.HSHELL_RUDEAPPACTIVATED:
-                    case NativeMethods.HSHELL_REDRAW:
-                    case NativeMethods.HSHELL_WINDOWREPLACED:
-                        Logger.LogDebug($"Shell hook event: {shellEvent}. Refreshing window list.", "MainWindow");
-                        // Refresh immediately on UI thread, bypassing external app checks
-                        RefreshWindowList(true);
-                        break;
-                }
-            }
-            return IntPtr.Zero;
-        }
 
         private static T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
         {

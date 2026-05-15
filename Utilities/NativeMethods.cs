@@ -120,6 +120,9 @@ namespace YomogiTaskBar.Utilities
         [DllImport("user32.dll")]
         public static extern bool RegisterShellHookWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        public static extern bool DeregisterShellHookWindow(IntPtr hWnd);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern uint RegisterWindowMessage(string lpString);
 

@@ -72,7 +72,7 @@ namespace YomogiTaskBar.Managers
                                     var desktopInfo = desktops.FirstOrDefault(d => d.Id == desktopId);
                                     desktopName = desktopInfo?.Name ?? "すべてのデスクトップで表示";
                                 }
-                                catch { }
+                                catch (Exception ex) { Logger.LogWarning($"仮想デスクトップID取得失敗: {ex.Message}", "WindowManager"); }
                             }
 
                             windows.Add(new WindowItemViewModel
@@ -159,7 +159,7 @@ namespace YomogiTaskBar.Managers
                     return (IVirtualDesktopManager?)Activator.CreateInstance(type);
                 }
             }
-            catch { }
+            catch (Exception ex) { Logger.LogWarning($"VirtualDesktopManager の COM インスタンス作成失敗: {ex.Message}", "WindowManager"); }
             return null;
         }
 
@@ -311,7 +311,7 @@ namespace YomogiTaskBar.Managers
                             needsDestroy = true;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { Logger.LogWarning($"ExtractIconEx 失敗: {ex.Message}", "WindowManager"); }
                 }
             }
 
@@ -399,7 +399,7 @@ namespace YomogiTaskBar.Managers
 
                 uint targetPid = realPid != 0 ? realPid : pid;
 
-                IntPtr hProcess = NativeMethods.OpenProcess(0x1000 /* PROCESS_QUERY_LIMITED_INFORMATION */, false, targetPid);
+                IntPtr hProcess = NativeMethods.OpenProcess(NativeMethods.PROCESS_QUERY_LIMITED_INFORMATION, false, targetPid);
                 if (hProcess != IntPtr.Zero)
                 {
                     try
@@ -439,10 +439,7 @@ namespace YomogiTaskBar.Managers
                     }
                 }
             }
-            catch
-            {
-                // Ignore errors
-            }
+            catch (Exception ex) { Logger.LogWarning($"UWP アイコン取得失敗: {ex.Message}", "WindowManager"); }
             return null;
         }
 
